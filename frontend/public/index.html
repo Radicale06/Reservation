@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#667eea" />
+    <meta name="description" content="Padel Court Reservation System" />
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Inter Font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind Configuration -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+            },
+            animation: {
+              fadeIn: "fadeIn 0.5s ease-in-out",
+              slideUp: "slideUp 0.3s ease-out",
+            },
+            keyframes: {
+              fadeIn: {
+                "0%": { opacity: "0", transform: "translateY(10px)" },
+                "100%": { opacity: "1", transform: "translateY(0)" },
+              },
+              slideUp: {
+                "0%": { opacity: "0", transform: "translateY(20px)" },
+                "100%": { opacity: "1", transform: "translateY(0)" },
+              },
+            },
+            scale: {
+              102: "1.02",
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Custom mobile styles -->
+    <style>
+      /* Ensure proper touch targets on mobile */
+      button,
+      [role="button"] {
+        min-height: 48px;
+        min-width: 48px;
+        touch-action: manipulation;
+      }
+
+      /* Prevent iOS zoom on input focus */
+      @media (max-width: 768px) {
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="number"],
+        textarea,
+        select {
+          font-size: 16px !important;
+        }
+      }
+
+      /* Custom animations */
+      .animate-fadeIn {
+        animation: fadeIn 0.3s ease-out;
+      }
+
+      /* Touch feedback */
+      .touch-feedback:active {
+        transform: scale(0.95);
+      }
+
+      /* Custom hover for mobile */
+      @media (hover: hover) {
+        .hover\:scale-102:hover {
+          transform: scale(1.02);
+        }
+      }
+    </style>
+
+    <title>Padel Reservation</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+  </body>
+</html>
