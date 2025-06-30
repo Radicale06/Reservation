@@ -1,4 +1,4 @@
-import { IsDateString, IsNotEmpty, Matches } from 'class-validator';
+import { IsDateString, IsNotEmpty, Matches, IsOptional, IsNumber } from 'class-validator';
 
 export class CheckAvailabilityDto {
   @IsNotEmpty()
@@ -10,4 +10,8 @@ export class CheckAvailabilityDto {
     message: 'Time must be in HH:MM format'
   })
   time: string;
+
+  @IsOptional()
+  @IsNumber()
+  courtId?: number;
 }

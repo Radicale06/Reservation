@@ -23,48 +23,56 @@ let ReservationsService = class ReservationsService {
         this.reservationsRepository = reservationsRepository;
     }
     async create(createReservationDto) {
-        const { reservationDate, startTime } = createReservationDto;
+        const { Date: reservationDate, StartTime, CourtId } = createReservationDto;
         const isAvailable = await this.checkAvailability({
             date: reservationDate,
-            time: startTime
+            time: StartTime,
+            courtId: CourtId
         });
         if (!isAvailable) {
             throw new common_1.BadRequestException('This time slot is already reserved');
         }
-        const endTime = this.calculateEndTime(startTime);
+        const endTime = createReservationDto.EndTime || this.calculateEndTime(StartTime);
         const reservation = this.reservationsRepository.create({
             ...createReservationDto,
-            reservationDate: new Date(reservationDate),
-            endTime,
-            price: 60,
+            Date: new Date(reservationDate),
+            EndTime: endTime,
+            CreatedAt: new Date(),
+            IsPaid: createReservationDto.IsPaid || false,
         });
         return this.reservationsRepository.save(reservation);
     }
     async checkAvailability(checkAvailabilityDto) {
-        const { date, time } = checkAvailabilityDto;
+        const { date, time, courtId } = checkAvailabilityDto;
         const reservationDate = new Date(date);
         const newStartTime = time;
         const newEndTime = this.calculateEndTime(time);
-        const overlappingReservations = await this.reservationsRepository
+        const queryBuilder = this.reservationsRepository
             .createQueryBuilder('reservation')
-            .where('reservation.reservationDate = :date', { date: reservationDate })
-            .andWhere('reservation.status IN (:...statuses)', { statuses: ['pending', 'confirmed'] })
-            .andWhere('(reservation.startTime < :newEndTime AND reservation.endTime > :newStartTime)', { newStartTime, newEndTime })
-            .getMany();
+            .where('reservation.Date = :date', { date: reservationDate })
+            .andWhere('reservation.Status IN (:...statuses)', { statuses: [1, 2, 4] })
+            .andWhere('(reservation.StartTime < :newEndTime AND reservation.EndTime > :newStartTime)', { newStartTime, newEndTime });
+        if (courtId) {
+            queryBuilder.andWhere('reservation.CourtId = :courtId', { courtId });
+        }
+        const overlappingReservations = await queryBuilder.getMany();
         return overlappingReservations.length === 0;
     }
-    async getAvailableSlots(date) {
+    async getAvailableSlots(date, courtId) {
         const reservationDate = new Date(date);
-        const allReservations = await this.reservationsRepository
+        const queryBuilder = this.reservationsRepository
             .createQueryBuilder('reservation')
-            .where('reservation.reservationDate = :date', { date: reservationDate })
-            .andWhere('reservation.status IN (:...statuses)', { statuses: ['pending', 'confirmed'] })
-            .getMany();
+            .where('reservation.Date = :date', { date: reservationDate })
+            .andWhere('reservation.Status IN (:...statuses)', { statuses: [1, 2, 4] });
+        if (courtId) {
+            queryBuilder.andWhere('reservation.CourtId = :courtId', { courtId });
+        }
+        const allReservations = await queryBuilder.getMany();
         const allSlots = this.generateTimeSlots();
         const unavailableSlots = [];
         for (const reservation of allReservations) {
-            const reservationStart = this.timeToMinutes(reservation.startTime);
-            const reservationEnd = this.timeToMinutes(reservation.endTime);
+            const reservationStart = this.timeToMinutes(reservation.StartTime);
+            const reservationEnd = this.timeToMinutes(reservation.EndTime);
             for (const slot of allSlots) {
                 const slotStart = this.timeToMinutes(slot);
                 const slotEnd = slotStart + 90;
@@ -80,47 +88,47 @@ let ReservationsService = class ReservationsService {
     async findAll() {
         return this.reservationsRepository.find({
             order: {
-                reservationDate: 'ASC',
-                startTime: 'ASC'
+                Date: 'DESC',
+                StartTime: 'ASC'
             }
         });
     }
     async findByDateRange(startDate, endDate) {
         return this.reservationsRepository.find({
             where: {
-                reservationDate: (0, typeorm_2.Between)(startDate, endDate),
-                status: 'confirmed'
+                Date: (0, typeorm_2.Between)(startDate, endDate),
+                Status: 2
             },
             order: {
-                reservationDate: 'ASC',
-                startTime: 'ASC'
+                Date: 'ASC',
+                StartTime: 'ASC'
             }
         });
     }
     async confirmPayment(reservationId, paymentId, gateway) {
         const reservation = await this.reservationsRepository.findOne({
-            where: { id: reservationId }
+            where: { Id: reservationId }
         });
         if (!reservation) {
             throw new common_1.BadRequestException('Reservation not found');
         }
-        reservation.status = 'confirmed';
-        reservation.paymentId = paymentId;
+        reservation.Status = 4;
+        reservation.IsPaid = true;
         return this.reservationsRepository.save(reservation);
     }
     async cancelReservation(reservationId) {
         const reservation = await this.reservationsRepository.findOne({
-            where: { id: reservationId }
+            where: { Id: reservationId }
         });
         if (!reservation) {
             throw new common_1.BadRequestException('Reservation not found');
         }
-        reservation.status = 'cancelled';
+        reservation.Status = 3;
         return this.reservationsRepository.save(reservation);
     }
     async findById(id) {
         const reservation = await this.reservationsRepository.findOne({
-            where: { id }
+            where: { Id: id }
         });
         if (!reservation) {
             throw new common_1.BadRequestException('Reservation not found');
@@ -147,6 +155,64 @@ let ReservationsService = class ReservationsService {
     timeToMinutes(time) {
         const [hours, minutes] = time.split(':').map(Number);
         return hours * 60 + minutes;
+    }
+    async getDailyStats(date) {
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+        const reservations = await this.reservationsRepository.find({
+            where: {
+                Date: (0, typeorm_2.Between)(startOfDay, endOfDay)
+            }
+        });
+        const totalReservations = reservations.length;
+        const confirmedReservations = reservations.filter(r => r.Status === 2).length;
+        const paidReservations = reservations.filter(r => r.Status === 4).length;
+        const cancelledReservations = reservations.filter(r => r.Status === 3).length;
+        const totalRevenue = reservations
+            .filter(r => r.Status === 4)
+            .reduce((sum, r) => sum + Number(r.Price), 0);
+        return {
+            date,
+            totalReservations,
+            confirmedReservations,
+            paidReservations,
+            cancelledReservations,
+            totalRevenue,
+            reservations
+        };
+    }
+    async getMonthlyStats(year, month) {
+        const startDate = new Date(year, month - 1, 1);
+        const endDate = new Date(year, month, 0);
+        const reservations = await this.reservationsRepository.find({
+            where: {
+                Date: (0, typeorm_2.Between)(startDate, endDate),
+                Status: 4
+            }
+        });
+        const totalRevenue = reservations.reduce((sum, r) => sum + Number(r.Price), 0);
+        const totalReservations = reservations.length;
+        const dailyStats = {};
+        reservations.forEach(reservation => {
+            const dayKey = reservation.Date.toISOString().split('T')[0];
+            if (!dailyStats[dayKey]) {
+                dailyStats[dayKey] = {
+                    count: 0,
+                    revenue: 0
+                };
+            }
+            dailyStats[dayKey].count++;
+            dailyStats[dayKey].revenue += Number(reservation.Price);
+        });
+        return {
+            year,
+            month,
+            totalReservations,
+            totalRevenue,
+            dailyStats
+        };
     }
 };
 exports.ReservationsService = ReservationsService;

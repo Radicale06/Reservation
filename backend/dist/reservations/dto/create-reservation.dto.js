@@ -12,50 +12,70 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateReservationDto = void 0;
 const class_validator_1 = require("class-validator");
 class CreateReservationDto {
-    firstName;
-    lastName;
-    email;
-    phoneNumber;
-    reservationDate;
-    startTime;
-    paymentId;
+    PlayerFullName;
+    PlayerPhone;
+    CourtId;
+    StartTime;
+    EndTime;
+    Date;
+    Price;
+    Status;
+    IsPaid;
+    CreatedBy;
 }
 exports.CreateReservationDto = CreateReservationDto;
 __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateReservationDto.prototype, "firstName", void 0);
+], CreateReservationDto.prototype, "PlayerFullName", void 0);
 __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateReservationDto.prototype, "lastName", void 0);
+], CreateReservationDto.prototype, "PlayerPhone", void 0);
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsEmail)(),
-    __metadata("design:type", String)
-], CreateReservationDto.prototype, "email", void 0);
-__decorate([
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreateReservationDto.prototype, "phoneNumber", void 0);
-__decorate([
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsDateString)(),
-    __metadata("design:type", String)
-], CreateReservationDto.prototype, "reservationDate", void 0);
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], CreateReservationDto.prototype, "CourtId", void 0);
 __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.Matches)(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, {
         message: 'Start time must be in HH:MM format'
     }),
     __metadata("design:type", String)
-], CreateReservationDto.prototype, "startTime", void 0);
+], CreateReservationDto.prototype, "StartTime", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.Matches)(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+        message: 'End time must be in HH:MM format'
+    }),
+    __metadata("design:type", String)
+], CreateReservationDto.prototype, "EndTime", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], CreateReservationDto.prototype, "Date", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], CreateReservationDto.prototype, "Price", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], CreateReservationDto.prototype, "Status", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateReservationDto.prototype, "IsPaid", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateReservationDto.prototype, "paymentId", void 0);
+], CreateReservationDto.prototype, "CreatedBy", void 0);
 //# sourceMappingURL=create-reservation.dto.js.map

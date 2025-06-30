@@ -1,9 +1,12 @@
 export declare class CreateReservationDto {
-    firstName: string;
-    lastName: string;
-    email: string;
-    phoneNumber: string;
-    reservationDate: string;
-    startTime: string;
-    paymentId?: string;
+    PlayerFullName: string;
+    PlayerPhone: string;
+    CourtId?: number;
+    StartTime: string;
+    EndTime?: string;
+    Date: string;
+    Price: number;
+    Status: number;
+    IsPaid?: boolean;
+    CreatedBy: string;
 }

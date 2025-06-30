@@ -14,6 +14,10 @@ const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const reservations_module_1 = require("./reservations/reservations.module");
 const payment_module_1 = require("./payment/payment.module");
+const auth_module_1 = require("./auth/auth.module");
+const court_module_1 = require("./court/court.module");
+const account_module_1 = require("./account/account.module");
+const company_module_1 = require("./company/company.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -35,6 +39,10 @@ exports.AppModule = AppModule = __decorate([
             }),
             reservations_module_1.ReservationsModule,
             payment_module_1.PaymentModule,
+            auth_module_1.AuthModule,
+            court_module_1.CourtModule,
+            account_module_1.AccountModule,
+            company_module_1.CompanyModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

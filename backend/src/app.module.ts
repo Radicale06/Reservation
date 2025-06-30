@@ -5,6 +5,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ReservationsModule } from './reservations/reservations.module';
 import { PaymentModule } from './payment/payment.module';
+import { AuthModule } from './auth/auth.module';
+import { CourtModule } from './court/court.module';
+import { AccountModule } from './account/account.module';
+import { CompanyModule } from './company/company.module';
 
 @Module({
   imports: [
@@ -23,6 +27,10 @@ import { PaymentModule } from './payment/payment.module';
     }),
     ReservationsModule,
     PaymentModule,
+    AuthModule,
+    CourtModule,
+    AccountModule,
+    CompanyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

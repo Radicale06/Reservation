@@ -28,8 +28,8 @@ let ReservationsController = class ReservationsController {
     findAll() {
         return this.reservationsService.findAll();
     }
-    getAvailableSlots(date) {
-        return this.reservationsService.getAvailableSlots(date);
+    getAvailableSlots(date, courtId) {
+        return this.reservationsService.getAvailableSlots(date, courtId ? +courtId : undefined);
     }
     checkAvailability(checkAvailabilityDto) {
         return this.reservationsService.checkAvailability(checkAvailabilityDto);
@@ -39,6 +39,18 @@ let ReservationsController = class ReservationsController {
     }
     confirmPayment(id, paymentId) {
         return this.reservationsService.confirmPayment(+id, paymentId);
+    }
+    findOne(id) {
+        return this.reservationsService.findById(+id);
+    }
+    cancel(id) {
+        return this.reservationsService.cancelReservation(+id);
+    }
+    getDailyStats(date) {
+        return this.reservationsService.getDailyStats(new Date(date));
+    }
+    getMonthlyStats(year, month) {
+        return this.reservationsService.getMonthlyStats(+year, +month);
     }
 };
 exports.ReservationsController = ReservationsController;
@@ -58,8 +70,9 @@ __decorate([
 __decorate([
     (0, common_1.Get)('available-slots'),
     __param(0, (0, common_1.Query)('date')),
+    __param(1, (0, common_1.Query)('courtId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
 ], ReservationsController.prototype, "getAvailableSlots", null);
 __decorate([
@@ -85,6 +98,35 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
 ], ReservationsController.prototype, "confirmPayment", null);
+__decorate([
+    (0, common_1.Get)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ReservationsController.prototype, "findOne", null);
+__decorate([
+    (0, common_1.Post)(':id/cancel'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ReservationsController.prototype, "cancel", null);
+__decorate([
+    (0, common_1.Get)('stats/daily'),
+    __param(0, (0, common_1.Query)('date')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ReservationsController.prototype, "getDailyStats", null);
+__decorate([
+    (0, common_1.Get)('stats/monthly'),
+    __param(0, (0, common_1.Query)('year')),
+    __param(1, (0, common_1.Query)('month')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], ReservationsController.prototype, "getMonthlyStats", null);
 exports.ReservationsController = ReservationsController = __decorate([
     (0, common_1.Controller)('reservations'),
     __metadata("design:paramtypes", [reservations_service_1.ReservationsService])

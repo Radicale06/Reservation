@@ -14,6 +14,7 @@ const class_validator_1 = require("class-validator");
 class CheckAvailabilityDto {
     date;
     time;
+    courtId;
 }
 exports.CheckAvailabilityDto = CheckAvailabilityDto;
 __decorate([
@@ -28,4 +29,9 @@ __decorate([
     }),
     __metadata("design:type", String)
 ], CheckAvailabilityDto.prototype, "time", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], CheckAvailabilityDto.prototype, "courtId", void 0);
 //# sourceMappingURL=check-availability.dto.js.map

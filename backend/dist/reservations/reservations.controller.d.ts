@@ -6,8 +6,12 @@ export declare class ReservationsController {
     constructor(reservationsService: ReservationsService);
     create(createReservationDto: CreateReservationDto): Promise<import("./entities/reservation.entity").Reservation>;
     findAll(): Promise<import("./entities/reservation.entity").Reservation[]>;
-    getAvailableSlots(date: string): Promise<string[]>;
+    getAvailableSlots(date: string, courtId?: string): Promise<string[]>;
     checkAvailability(checkAvailabilityDto: CheckAvailabilityDto): Promise<boolean>;
     getCalendarData(startDate: string, endDate: string): Promise<import("./entities/reservation.entity").Reservation[]>;
     confirmPayment(id: string, paymentId: string): Promise<import("./entities/reservation.entity").Reservation>;
+    findOne(id: string): Promise<import("./entities/reservation.entity").Reservation>;
+    cancel(id: string): Promise<import("./entities/reservation.entity").Reservation>;
+    getDailyStats(date: string): Promise<any>;
+    getMonthlyStats(year: string, month: string): Promise<any>;
 }

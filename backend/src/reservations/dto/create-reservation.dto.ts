@@ -1,33 +1,47 @@
-import { IsEmail, IsNotEmpty, IsString, IsDateString, Matches, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsDateString, Matches, IsOptional, IsNumber, IsBoolean } from 'class-validator';
 
 export class CreateReservationDto {
   @IsNotEmpty()
   @IsString()
-  firstName: string;
+  PlayerFullName: string;
 
   @IsNotEmpty()
   @IsString()
-  lastName: string;
+  PlayerPhone: string;
 
-  @IsNotEmpty()
-  @IsEmail()
-  email: string;
-
-  @IsNotEmpty()
-  @IsString()
-  phoneNumber: string;
-
-  @IsNotEmpty()
-  @IsDateString()
-  reservationDate: string;
+  @IsOptional()
+  @IsNumber()
+  CourtId?: number;
 
   @IsNotEmpty()
   @Matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, {
     message: 'Start time must be in HH:MM format'
   })
-  startTime: string;
+  StartTime: string;
 
   @IsOptional()
+  @Matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+    message: 'End time must be in HH:MM format'
+  })
+  EndTime?: string;
+
+  @IsNotEmpty()
+  @IsDateString()
+  Date: string;
+
+  @IsNotEmpty()
+  @IsNumber()
+  Price: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  Status: number;
+
+  @IsOptional()
+  @IsBoolean()
+  IsPaid?: boolean;
+
+  @IsNotEmpty()
   @IsString()
-  paymentId?: string;
+  CreatedBy: string;
 }

@@ -7,7 +7,7 @@ export declare class ReservationsService {
     constructor(reservationsRepository: Repository<Reservation>);
     create(createReservationDto: CreateReservationDto): Promise<Reservation>;
     checkAvailability(checkAvailabilityDto: CheckAvailabilityDto): Promise<boolean>;
-    getAvailableSlots(date: string): Promise<string[]>;
+    getAvailableSlots(date: string, courtId?: number): Promise<string[]>;
     findAll(): Promise<Reservation[]>;
     findByDateRange(startDate: Date, endDate: Date): Promise<Reservation[]>;
     confirmPayment(reservationId: number, paymentId: string, gateway?: string): Promise<Reservation>;
@@ -16,4 +16,6 @@ export declare class ReservationsService {
     private calculateEndTime;
     private generateTimeSlots;
     private timeToMinutes;
+    getDailyStats(date: Date): Promise<any>;
+    getMonthlyStats(year: number, month: number): Promise<any>;
 }

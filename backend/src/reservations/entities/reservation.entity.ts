@@ -1,44 +1,46 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Court } from '../../court/entities/court.entity';
 
-@Entity('reservations')
+@Entity('Reservation')
 export class Reservation {
   @PrimaryGeneratedColumn()
-  id: number;
+  Id: number;
 
-  @Column()
-  firstName: string;
+  @Column({ type: 'varchar', length: 255 })
+  PlayerFullName: string;
 
-  @Column()
-  lastName: string;
-
-  @Column()
-  email: string;
-
-  @Column()
-  phoneNumber: string;
-
-  @Column()
-  reservationDate: Date;
-
-  @Column('time')
-  startTime: string;
-
-  @Column('time')
-  endTime: string;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 60 })
-  price: number;
-
-  @Column({ 
-    type: 'enum', 
-    enum: ['pending', 'confirmed', 'cancelled'],
-    default: 'pending'
-  })
-  status: string;
+  @Column({ type: 'varchar', length: 255 })
+  PlayerPhone: string;
 
   @Column({ nullable: true })
-  paymentId: string;
+  CourtId: number;
 
-  @CreateDateColumn()
-  createdAt: Date;
+  @ManyToOne(() => Court)
+  @JoinColumn({ name: 'CourtId' })
+  court: Court;
+
+  @Column({ type: 'varchar', length: 255 })
+  StartTime: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  EndTime: string;
+
+  @Column({ type: 'date' })
+  Date: Date;
+
+  @Column({ type: 'decimal', precision: 18, scale: 3 })
+  Price: number;
+
+  @Column({ type: 'int' })
+  Status: number;
+
+  @Column({ type: 'bit', default: false })
+  IsPaid: boolean;
+
+  @Column({ type: 'datetime' })
+  CreatedAt: Date;
+
+  @Column({ type: 'varchar', length: 255 })
+  CreatedBy: string;
+
 }

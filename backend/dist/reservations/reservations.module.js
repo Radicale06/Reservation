@@ -12,12 +12,14 @@ const typeorm_1 = require("@nestjs/typeorm");
 const reservations_controller_1 = require("./reservations.controller");
 const reservations_service_1 = require("./reservations.service");
 const reservation_entity_1 = require("./entities/reservation.entity");
+const payment_type_entity_1 = require("./entities/payment-type.entity");
+const reservation_status_entity_1 = require("./entities/reservation-status.entity");
 let ReservationsModule = class ReservationsModule {
 };
 exports.ReservationsModule = ReservationsModule;
 exports.ReservationsModule = ReservationsModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([reservation_entity_1.Reservation])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([reservation_entity_1.Reservation, payment_type_entity_1.PaymentType, reservation_status_entity_1.ReservationStatus])],
         controllers: [reservations_controller_1.ReservationsController],
         providers: [reservations_service_1.ReservationsService],
         exports: [reservations_service_1.ReservationsService],

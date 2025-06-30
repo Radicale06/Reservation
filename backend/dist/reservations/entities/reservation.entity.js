@@ -11,74 +11,77 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Reservation = void 0;
 const typeorm_1 = require("typeorm");
+const court_entity_1 = require("../../court/entities/court.entity");
 let Reservation = class Reservation {
-    id;
-    firstName;
-    lastName;
-    email;
-    phoneNumber;
-    reservationDate;
-    startTime;
-    endTime;
-    price;
-    status;
-    paymentId;
-    createdAt;
+    Id;
+    PlayerFullName;
+    PlayerPhone;
+    CourtId;
+    court;
+    StartTime;
+    EndTime;
+    Date;
+    Price;
+    Status;
+    IsPaid;
+    CreatedAt;
+    CreatedBy;
 };
 exports.Reservation = Reservation;
 __decorate([
     (0, typeorm_1.PrimaryGeneratedColumn)(),
     __metadata("design:type", Number)
-], Reservation.prototype, "id", void 0);
+], Reservation.prototype, "Id", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ type: 'varchar', length: 255 }),
     __metadata("design:type", String)
-], Reservation.prototype, "firstName", void 0);
+], Reservation.prototype, "PlayerFullName", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ type: 'varchar', length: 255 }),
     __metadata("design:type", String)
-], Reservation.prototype, "lastName", void 0);
-__decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
-], Reservation.prototype, "email", void 0);
-__decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
-], Reservation.prototype, "phoneNumber", void 0);
-__decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", Date)
-], Reservation.prototype, "reservationDate", void 0);
-__decorate([
-    (0, typeorm_1.Column)('time'),
-    __metadata("design:type", String)
-], Reservation.prototype, "startTime", void 0);
-__decorate([
-    (0, typeorm_1.Column)('time'),
-    __metadata("design:type", String)
-], Reservation.prototype, "endTime", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2, default: 60 }),
-    __metadata("design:type", Number)
-], Reservation.prototype, "price", void 0);
-__decorate([
-    (0, typeorm_1.Column)({
-        type: 'enum',
-        enum: ['pending', 'confirmed', 'cancelled'],
-        default: 'pending'
-    }),
-    __metadata("design:type", String)
-], Reservation.prototype, "status", void 0);
+], Reservation.prototype, "PlayerPhone", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
-    __metadata("design:type", String)
-], Reservation.prototype, "paymentId", void 0);
+    __metadata("design:type", Number)
+], Reservation.prototype, "CourtId", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)(),
+    (0, typeorm_1.ManyToOne)(() => court_entity_1.Court),
+    (0, typeorm_1.JoinColumn)({ name: 'CourtId' }),
+    __metadata("design:type", court_entity_1.Court)
+], Reservation.prototype, "court", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 255 }),
+    __metadata("design:type", String)
+], Reservation.prototype, "StartTime", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
+    __metadata("design:type", String)
+], Reservation.prototype, "EndTime", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'date' }),
     __metadata("design:type", Date)
-], Reservation.prototype, "createdAt", void 0);
+], Reservation.prototype, "Date", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'decimal', precision: 18, scale: 3 }),
+    __metadata("design:type", Number)
+], Reservation.prototype, "Price", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'int' }),
+    __metadata("design:type", Number)
+], Reservation.prototype, "Status", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'bit', default: false }),
+    __metadata("design:type", Boolean)
+], Reservation.prototype, "IsPaid", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'datetime' }),
+    __metadata("design:type", Date)
+], Reservation.prototype, "CreatedAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 255 }),
+    __metadata("design:type", String)
+], Reservation.prototype, "CreatedBy", void 0);
 exports.Reservation = Reservation = __decorate([
-    (0, typeorm_1.Entity)('reservations')
+    (0, typeorm_1.Entity)('Reservation')
 ], Reservation);
 //# sourceMappingURL=reservation.entity.js.map

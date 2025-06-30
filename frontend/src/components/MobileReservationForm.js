@@ -160,15 +160,18 @@ const MobileReservationForm = ({
 
       try {
         const reservation = await reservationService.createReservation({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phoneNumber: formData.phoneNumber,
-          reservationDate: selectedDate,
-          startTime: selectedTime,
+          PlayerFullName: `${formData.firstName} ${formData.lastName}`,
+          PlayerPhone: formData.phoneNumber,
+          Date: selectedDate,
+          StartTime: selectedTime,
+          Price: 60,
+          Status: 1, // En attente
+          CreatedBy: "LandingPage",
+          CourtId: null,
+          IsPaid: false,
         });
 
-        setReservationId(reservation.id);
+        setReservationId(reservation.Id || reservation.id);
         setActiveStep(1);
       } catch (error) {
         setError("Erreur lors de la création de la réservation");

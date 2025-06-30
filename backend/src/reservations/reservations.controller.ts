@@ -18,8 +18,8 @@ export class ReservationsController {
   }
 
   @Get('available-slots')
-  getAvailableSlots(@Query('date') date: string) {
-    return this.reservationsService.getAvailableSlots(date);
+  getAvailableSlots(@Query('date') date: string, @Query('courtId') courtId?: string) {
+    return this.reservationsService.getAvailableSlots(date, courtId ? +courtId : undefined);
   }
 
   @Post('check-availability')
@@ -44,5 +44,25 @@ export class ReservationsController {
     @Body('paymentId') paymentId: string
   ) {
     return this.reservationsService.confirmPayment(+id, paymentId);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.reservationsService.findById(+id);
+  }
+
+  @Post(':id/cancel')
+  cancel(@Param('id') id: string) {
+    return this.reservationsService.cancelReservation(+id);
+  }
+
+  @Get('stats/daily')
+  getDailyStats(@Query('date') date: string) {
+    return this.reservationsService.getDailyStats(new Date(date));
+  }
+
+  @Get('stats/monthly')
+  getMonthlyStats(@Query('year') year: string, @Query('month') month: string) {
+    return this.reservationsService.getMonthlyStats(+year, +month);
   }
 }
