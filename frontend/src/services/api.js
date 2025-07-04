@@ -10,10 +10,12 @@ const api = axios.create({
 });
 
 export const reservationService = {
-  getAvailableSlots: async (date) => {
-    const response = await api.get(
-      `/reservations/available-slots?date=${date}`
-    );
+  getAvailableSlots: async (date, courtId) => {
+    let url = `/reservations/available-slots?date=${date}`;
+    if (courtId) {
+      url += `&courtId=${courtId}`;
+    }
+    const response = await api.get(url);
     return response.data;
   },
 

@@ -18,6 +18,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { reservations, courts } from '../services/adminApi';
+import CreateReservationModal from '../components/CreateReservationModal';
 
 const Reservations = () => {
   const [reservationsList, setReservationsList] = useState([]);
@@ -376,6 +377,18 @@ const Reservations = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Create Reservation Modal */}
+      {showCreateModal && (
+        <CreateReservationModal 
+          courts={courtsList}
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={() => {
+            setShowCreateModal(false);
+            loadData();
+          }}
+        />
       )}
     </div>
   );

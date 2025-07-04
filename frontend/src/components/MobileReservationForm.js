@@ -166,9 +166,9 @@ const MobileReservationForm = ({
           StartTime: selectedTime,
           Price: 60,
           Status: 1, // En attente
-          CreatedBy: "LandingPage",
+          CreatedBy: 'LandingPage',
           CourtId: null,
-          IsPaid: false,
+          IsPaid: false
         });
 
         setReservationId(reservation.Id || reservation.id);
