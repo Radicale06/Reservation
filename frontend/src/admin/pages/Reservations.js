@@ -30,6 +30,8 @@ const Reservations = () => {
   const [courtFilter, setCourtFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState(null);
+  const [isEditingCourt, setIsEditingCourt] = useState(false);
+  const [selectedCourtId, setSelectedCourtId] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -83,6 +85,27 @@ const Reservations = () => {
         console.error('Error confirming payment:', error);
         alert('Erreur lors de la confirmation du paiement');
       }
+    }
+  };
+
+  const handleUpdateCourt = async () => {
+    if (!selectedReservation || !selectedCourtId) return;
+    
+    try {
+      await reservations.updateCourt(selectedReservation.Id, selectedCourtId);
+      setIsEditingCourt(false);
+      loadData();
+      // Update the selected reservation with new court info
+      const updatedReservation = {
+        ...selectedReservation,
+        CourtId: selectedCourtId,
+        court: courtsList.find(c => c.Id === parseInt(selectedCourtId))
+      };
+      setSelectedReservation(updatedReservation);
+      alert('Terrain mis à jour avec succès');
+    } catch (error) {
+      console.error('Error updating court:', error);
+      alert(error.response?.data?.message || 'Erreur lors de la mise à jour du terrain');
     }
   };
 
@@ -251,7 +274,14 @@ const Reservations = () => {
                     <td>
                       <div className="court-info">
                         <MapPin size={14} />
-                        {reservation.court?.Name || 'Non assigné'}
+                        <div>
+                          <div>{reservation.court?.Name || 'Non assigné'}</div>
+                          {reservation.court?.StadiumType && (
+                            <small className="court-type">
+                              ({reservation.court.StadiumType === 'indoor' ? 'Intérieur' : 'Extérieur'})
+                            </small>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td>
@@ -340,6 +370,20 @@ const Reservations = () => {
                   <span>{selectedReservation.PlayerPhone}</span>
                 </div>
                 <div className="detail-item">
+                  <label>Email</label>
+                  <span>{selectedReservation.PlayerEmail || 'Non fourni'}</span>
+                </div>
+                <div className="detail-item">
+                  <label>Nombre de joueurs</label>
+                  <span>{selectedReservation.NumberOfPlayers || 'N/A'}</span>
+                </div>
+                <div className="detail-item">
+                  <label>Type de terrain demandé</label>
+                  <span className="stadium-type-badge">
+                    {selectedReservation.StadiumType === 'indoor' ? 'Intérieur' : 'Extérieur'}
+                  </span>
+                </div>
+                <div className="detail-item">
                   <label>Date</label>
                   <span>{formatDate(selectedReservation.Date)}</span>
                 </div>
@@ -348,8 +392,66 @@ const Reservations = () => {
                   <span>{formatTime(selectedReservation.StartTime)} - {formatTime(selectedReservation.EndTime)}</span>
                 </div>
                 <div className="detail-item">
-                  <label>Terrain</label>
-                  <span>{selectedReservation.court?.Name || 'Non assigné'}</span>
+                  <label>Terrain assigné</label>
+                  <div className="court-assignment">
+                    {!isEditingCourt ? (
+                      <>
+                        <div>
+                          <div>{selectedReservation.court?.Name || 'Non assigné'}</div>
+                          {selectedReservation.court?.StadiumType && (
+                            <small className="court-type-assigned">
+                              ({selectedReservation.court.StadiumType === 'indoor' ? 'Intérieur' : 'Extérieur'})
+                            </small>
+                          )}
+                        </div>
+                        <button 
+                          className="btn-icon btn-edit"
+                          onClick={() => {
+                            setIsEditingCourt(true);
+                            setSelectedCourtId(selectedReservation.CourtId || '');
+                          }}
+                          title="Modifier le terrain"
+                        >
+                          <Edit size={14} />
+                        </button>
+                      </>
+                    ) : (
+                      <div className="court-edit-form">
+                        <select 
+                          value={selectedCourtId || ''}
+                          onChange={(e) => setSelectedCourtId(e.target.value ? parseInt(e.target.value) : null)}
+                          className="court-select"
+                        >
+                          <option value="">Sélectionner un terrain</option>
+                          {courtsList
+                            .filter(court => court.IsActive)
+                            .map(court => (
+                              <option key={court.Id} value={court.Id}>
+                                {court.Name} ({court.StadiumType === 'indoor' ? 'Intérieur' : 'Extérieur'})
+                              </option>
+                            ))
+                          }
+                        </select>
+                        <div className="court-edit-actions">
+                          <button 
+                            className="btn-sm btn-primary"
+                            onClick={handleUpdateCourt}
+                          >
+                            Enregistrer
+                          </button>
+                          <button 
+                            className="btn-sm btn-secondary"
+                            onClick={() => {
+                              setIsEditingCourt(false);
+                              setSelectedCourtId(selectedReservation.CourtId);
+                            }}
+                          >
+                            Annuler
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="detail-item">
                   <label>Prix</label>

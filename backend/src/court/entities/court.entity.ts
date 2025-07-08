@@ -14,10 +14,13 @@ export class Court {
   @Column({ type: 'varchar', length: 255 })
   Type: string;
 
+  @Column({ type: 'varchar', length: 20, default: 'outdoor' })
+  StadiumType: string;
+
   @Column({ type: 'blob', nullable: true })
   Image: Buffer;
 
-  @Column({ type: 'bit', default: true })
+  @Column({ type: 'boolean', default: true })
   IsActive: boolean;
 
   @Column({ type: 'datetime' })

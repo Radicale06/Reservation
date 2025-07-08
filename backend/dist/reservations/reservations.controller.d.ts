@@ -14,4 +14,5 @@ export declare class ReservationsController {
     cancel(id: string): Promise<import("./entities/reservation.entity").Reservation>;
     getDailyStats(date: string): Promise<any>;
     getMonthlyStats(year: string, month: string): Promise<any>;
+    updateCourt(id: string, courtId: number): Promise<import("./entities/reservation.entity").Reservation>;
 }

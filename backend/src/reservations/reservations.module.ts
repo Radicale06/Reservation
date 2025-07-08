@@ -5,9 +5,13 @@ import { ReservationsService } from './reservations.service';
 import { Reservation } from './entities/reservation.entity';
 import { PaymentType } from './entities/payment-type.entity';
 import { ReservationStatus } from './entities/reservation-status.entity';
+import { CourtModule } from '../court/court.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Reservation, PaymentType, ReservationStatus])],
+  imports: [
+    TypeOrmModule.forFeature([Reservation, PaymentType, ReservationStatus]),
+    CourtModule
+  ],
   controllers: [ReservationsController],
   providers: [ReservationsService],
   exports: [ReservationsService],

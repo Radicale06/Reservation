@@ -65,6 +65,7 @@ export const reservations = {
   create: (data) => api.post('/reservations', data),
   cancel: (id) => api.post(`/reservations/${id}/cancel`),
   confirmPayment: (id, paymentId) => api.post(`/reservations/${id}/confirm-payment`, { paymentId }),
+  updateCourt: (id, courtId) => api.put(`/reservations/${id}/court`, { courtId }),
   getDailyStats: (date) => api.get('/reservations/stats/daily', { params: { date } }),
   getMonthlyStats: (year, month) => api.get('/reservations/stats/monthly', { params: { year, month } }),
 };

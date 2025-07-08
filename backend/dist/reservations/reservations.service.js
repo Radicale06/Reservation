@@ -17,24 +17,38 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const reservation_entity_1 = require("./entities/reservation.entity");
+const court_service_1 = require("../court/court.service");
 let ReservationsService = class ReservationsService {
     reservationsRepository;
-    constructor(reservationsRepository) {
+    courtService;
+    constructor(reservationsRepository, courtService) {
         this.reservationsRepository = reservationsRepository;
+        this.courtService = courtService;
     }
     async create(createReservationDto) {
-        const { Date: reservationDate, StartTime, CourtId } = createReservationDto;
-        const isAvailable = await this.checkAvailability({
-            date: reservationDate,
-            time: StartTime,
-            courtId: CourtId
-        });
-        if (!isAvailable) {
-            throw new common_1.BadRequestException('This time slot is already reserved');
+        const { Date: reservationDate, StartTime, StadiumType } = createReservationDto;
+        let { CourtId } = createReservationDto;
+        if (!CourtId) {
+            const availableCourt = await this.findAvailableCourtByType(reservationDate, StartTime, StadiumType);
+            if (!availableCourt) {
+                throw new common_1.BadRequestException(`No ${StadiumType} court available for this time slot`);
+            }
+            CourtId = availableCourt.Id;
+        }
+        else {
+            const isAvailable = await this.checkAvailability({
+                date: reservationDate,
+                time: StartTime,
+                courtId: CourtId
+            });
+            if (!isAvailable) {
+                throw new common_1.BadRequestException('This time slot is already reserved');
+            }
         }
         const endTime = createReservationDto.EndTime || this.calculateEndTime(StartTime);
         const reservation = this.reservationsRepository.create({
             ...createReservationDto,
+            CourtId,
             Date: new Date(reservationDate),
             EndTime: endTime,
             CreatedAt: new Date(),
@@ -87,6 +101,7 @@ let ReservationsService = class ReservationsService {
     }
     async findAll() {
         return this.reservationsRepository.find({
+            relations: ['court'],
             order: {
                 Date: 'DESC',
                 StartTime: 'ASC'
@@ -128,7 +143,8 @@ let ReservationsService = class ReservationsService {
     }
     async findById(id) {
         const reservation = await this.reservationsRepository.findOne({
-            where: { Id: id }
+            where: { Id: id },
+            relations: ['court']
         });
         if (!reservation) {
             throw new common_1.BadRequestException('Reservation not found');
@@ -156,6 +172,37 @@ let ReservationsService = class ReservationsService {
         const [hours, minutes] = time.split(':').map(Number);
         return hours * 60 + minutes;
     }
+    async findAvailableCourtByType(date, time, stadiumType) {
+        const courts = await this.courtService.findActive();
+        const courtsOfType = courts.filter(court => court.StadiumType.toLowerCase() === stadiumType.toLowerCase());
+        if (courtsOfType.length === 0) {
+            return null;
+        }
+        for (const court of courtsOfType) {
+            const isAvailable = await this.checkAvailability({
+                date,
+                time,
+                courtId: court.Id
+            });
+            if (isAvailable) {
+                return court;
+            }
+        }
+        return null;
+    }
+    async updateCourtAssignment(reservationId, newCourtId) {
+        const reservation = await this.findById(reservationId);
+        const isAvailable = await this.checkAvailability({
+            date: reservation.Date.toISOString().split('T')[0],
+            time: reservation.StartTime,
+            courtId: newCourtId
+        });
+        if (!isAvailable) {
+            throw new common_1.BadRequestException('The selected court is not available for this time slot');
+        }
+        reservation.CourtId = newCourtId;
+        return this.reservationsRepository.save(reservation);
+    }
     async getDailyStats(date) {
         const startOfDay = new Date(date);
         startOfDay.setHours(0, 0, 0, 0);
@@ -164,7 +211,8 @@ let ReservationsService = class ReservationsService {
         const reservations = await this.reservationsRepository.find({
             where: {
                 Date: (0, typeorm_2.Between)(startOfDay, endOfDay)
-            }
+            },
+            relations: ['court']
         });
         const totalReservations = reservations.length;
         const confirmedReservations = reservations.filter(r => r.Status === 2).length;
@@ -219,6 +267,7 @@ exports.ReservationsService = ReservationsService;
 exports.ReservationsService = ReservationsService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(reservation_entity_1.Reservation)),
-    __metadata("design:paramtypes", [typeorm_2.Repository])
+    __metadata("design:paramtypes", [typeorm_2.Repository,
+        court_service_1.CourtService])
 ], ReservationsService);
 //# sourceMappingURL=reservations.service.js.map

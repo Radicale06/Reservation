@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsDateString, Matches, IsOptional, IsNumber, IsBoolean } from 'class-validator';
+import { IsNotEmpty, IsString, IsDateString, Matches, IsOptional, IsNumber, IsBoolean, IsEmail, Min, Max, IsIn } from 'class-validator';
 
 export class CreateReservationDto {
   @IsNotEmpty()
@@ -8,6 +8,20 @@ export class CreateReservationDto {
   @IsNotEmpty()
   @IsString()
   PlayerPhone: string;
+
+  @IsOptional()
+  @IsEmail()
+  PlayerEmail?: string;
+
+  @IsNotEmpty()
+  @IsNumber()
+  @IsIn([2, 4], { message: 'Number of players must be either 2 or 4' })
+  NumberOfPlayers: number;
+
+  @IsNotEmpty()
+  @IsString()
+  @IsIn(['indoor', 'outdoor'])
+  StadiumType: string;
 
   @IsOptional()
   @IsNumber()

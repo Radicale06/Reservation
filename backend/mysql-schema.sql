@@ -28,6 +28,7 @@ CREATE TABLE Court (
     Name VARCHAR(255) NOT NULL,
     Description VARCHAR(255),
     Type VARCHAR(255) NOT NULL,
+    StadiumType VARCHAR(20) NOT NULL DEFAULT 'outdoor',
     Image LONGBLOB,
     IsActive BOOLEAN NOT NULL DEFAULT TRUE,
     CreatedAt DATETIME NOT NULL
@@ -50,6 +51,9 @@ CREATE TABLE Reservation (
     Id INT AUTO_INCREMENT PRIMARY KEY,
     PlayerFullName VARCHAR(255) NOT NULL,
     PlayerPhone VARCHAR(255) NOT NULL,
+    PlayerEmail VARCHAR(255),
+    NumberOfPlayers INT NOT NULL,
+    StadiumType VARCHAR(20) NOT NULL,
     CourtId INT,
     StartTime VARCHAR(255) NOT NULL,
     EndTime VARCHAR(255),
@@ -77,10 +81,10 @@ CREATE TABLE Payment (
 INSERT INTO Account (UserName, Password, FullName, CreatedAt, CreatedBy) VALUES 
 ('Adminitarteur', '0000', 'Neji bouzid', NOW(), 'Access');
 
-INSERT INTO Court (Name, Description, Type, IsActive, CreatedAt) VALUES 
-('Terrain 01', 'Terrain 01 de padel', 'Indoor', TRUE, NOW()),
-('Terrain 02', 'Terrain 02 Padel', 'Outdoor', TRUE, NOW()),
-('Terrain 03', 'Terrain 03', 'Indoor', FALSE, NOW());
+INSERT INTO Court (Name, Description, Type, StadiumType, IsActive, CreatedAt) VALUES 
+('Terrain 01', 'Terrain 01 de padel', 'Padel', 'indoor', TRUE, NOW()),
+('Terrain 02', 'Terrain 02 Padel', 'Padel', 'outdoor', TRUE, NOW()),
+('Terrain 03', 'Terrain 03', 'Padel', 'indoor', FALSE, NOW());
 
 INSERT INTO PaymentType (PaymentType) VALUES 
 ('En ligne'),
@@ -93,10 +97,10 @@ INSERT INTO ReservationStatus (Status) VALUES
 ('Payée');
 
 -- Insert sample reservations
-INSERT INTO Reservation (PlayerFullName, PlayerPhone, CourtId, StartTime, EndTime, Date, Price, Status, IsPaid, CreatedAt, CreatedBy) VALUES 
-('Neji Bouzid', '29364502', NULL, '16:00', '17:30', '2025-06-27', 120.000, 1, FALSE, NOW(), 'Whatsapp'),
-('Neji Bouzid 2', '29364502', 1, '15:00', '16:30', '2025-06-27', 120.000, 4, TRUE, NOW(), 'LandingPage'),
-('Neji bouzid 3', '29364502', NULL, '14:00', '15:30', '2025-06-28', 120.000, 2, FALSE, NOW(), 'Whatsapp');
+INSERT INTO Reservation (PlayerFullName, PlayerPhone, PlayerEmail, NumberOfPlayers, StadiumType, CourtId, StartTime, EndTime, Date, Price, Status, IsPaid, CreatedAt, CreatedBy) VALUES 
+('Neji Bouzid', '29364502', 'neji@example.com', 4, 'indoor', 1, '16:00', '17:30', '2025-06-27', 120.000, 1, FALSE, NOW(), 'Whatsapp'),
+('Neji Bouzid 2', '29364502', NULL, 2, 'outdoor', 2, '15:00', '16:30', '2025-06-27', 120.000, 4, TRUE, NOW(), 'LandingPage'),
+('Neji bouzid 3', '29364502', 'neji3@example.com', 4, 'indoor', 1, '14:00', '15:30', '2025-06-28', 120.000, 2, FALSE, NOW(), 'Whatsapp');
 
 -- Insert sample payment
 INSERT INTO Payment (PaiementTypeId, Amount, ReservationId, CreatedAt) VALUES 

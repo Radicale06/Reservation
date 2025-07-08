@@ -52,6 +52,9 @@ let ReservationsController = class ReservationsController {
     getMonthlyStats(year, month) {
         return this.reservationsService.getMonthlyStats(+year, +month);
     }
+    updateCourt(id, courtId) {
+        return this.reservationsService.updateCourtAssignment(+id, courtId);
+    }
 };
 exports.ReservationsController = ReservationsController;
 __decorate([
@@ -127,6 +130,14 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
 ], ReservationsController.prototype, "getMonthlyStats", null);
+__decorate([
+    (0, common_1.Put)(':id/court'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)('courtId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Number]),
+    __metadata("design:returntype", void 0)
+], ReservationsController.prototype, "updateCourt", null);
 exports.ReservationsController = ReservationsController = __decorate([
     (0, common_1.Controller)('reservations'),
     __metadata("design:paramtypes", [reservations_service_1.ReservationsService])

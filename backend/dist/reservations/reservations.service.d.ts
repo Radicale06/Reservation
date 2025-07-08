@@ -2,9 +2,11 @@ import { Repository } from 'typeorm';
 import { Reservation } from './entities/reservation.entity';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { CheckAvailabilityDto } from './dto/check-availability.dto';
+import { CourtService } from '../court/court.service';
 export declare class ReservationsService {
     private reservationsRepository;
-    constructor(reservationsRepository: Repository<Reservation>);
+    private courtService;
+    constructor(reservationsRepository: Repository<Reservation>, courtService: CourtService);
     create(createReservationDto: CreateReservationDto): Promise<Reservation>;
     checkAvailability(checkAvailabilityDto: CheckAvailabilityDto): Promise<boolean>;
     getAvailableSlots(date: string, courtId?: number): Promise<string[]>;
@@ -16,6 +18,8 @@ export declare class ReservationsService {
     private calculateEndTime;
     private generateTimeSlots;
     private timeToMinutes;
+    findAvailableCourtByType(date: string, time: string, stadiumType: string): Promise<any>;
+    updateCourtAssignment(reservationId: number, newCourtId: number): Promise<Reservation>;
     getDailyStats(date: Date): Promise<any>;
     getMonthlyStats(year: number, month: number): Promise<any>;
 }

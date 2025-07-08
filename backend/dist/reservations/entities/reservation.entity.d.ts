@@ -3,6 +3,9 @@ export declare class Reservation {
     Id: number;
     PlayerFullName: string;
     PlayerPhone: string;
+    PlayerEmail: string;
+    NumberOfPlayers: number;
+    StadiumType: string;
     CourtId: number;
     court: Court;
     StartTime: string;

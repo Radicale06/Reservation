@@ -16,6 +16,9 @@ let Reservation = class Reservation {
     Id;
     PlayerFullName;
     PlayerPhone;
+    PlayerEmail;
+    NumberOfPlayers;
+    StadiumType;
     CourtId;
     court;
     StartTime;
@@ -40,6 +43,18 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255 }),
     __metadata("design:type", String)
 ], Reservation.prototype, "PlayerPhone", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
+    __metadata("design:type", String)
+], Reservation.prototype, "PlayerEmail", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'int' }),
+    __metadata("design:type", Number)
+], Reservation.prototype, "NumberOfPlayers", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 20 }),
+    __metadata("design:type", String)
+], Reservation.prototype, "StadiumType", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", Number)
@@ -70,7 +85,7 @@ __decorate([
     __metadata("design:type", Number)
 ], Reservation.prototype, "Status", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'bit', default: false }),
+    (0, typeorm_1.Column)({ type: 'boolean', default: false }),
     __metadata("design:type", Boolean)
 ], Reservation.prototype, "IsPaid", void 0);
 __decorate([

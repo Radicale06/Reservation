@@ -13,6 +13,8 @@ import {
   AlertCircle,
   X,
   MapPin,
+  Users,
+  Home,
 } from "lucide-react";
 import { reservationService } from "../services/api";
 
@@ -32,6 +34,8 @@ const MobileReservationForm = ({
     lastName: "",
     email: "",
     phoneNumber: "",
+    numberOfPlayers: 2,
+    stadiumType: "outdoor",
     paymentMethod: "card",
     // Card details
     cardNumber: "",
@@ -79,9 +83,8 @@ const MobileReservationForm = ({
     if (step === 0) {
       if (!formData.firstName.trim()) newErrors.firstName = "Requis";
       if (!formData.lastName.trim()) newErrors.lastName = "Requis";
-      if (!formData.email.trim()) {
-        newErrors.email = "Requis";
-      } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      // Email is optional
+      if (formData.email.trim() && !/\S+@\S+\.\S+/.test(formData.email)) {
         newErrors.email = "Email invalide";
       }
       if (!formData.phoneNumber.trim()) {
@@ -159,9 +162,11 @@ const MobileReservationForm = ({
       setError(null);
 
       try {
-        const reservation = await reservationService.createReservation({
+        const reservationData = {
           PlayerFullName: `${formData.firstName} ${formData.lastName}`,
           PlayerPhone: formData.phoneNumber,
+          NumberOfPlayers: formData.numberOfPlayers,
+          StadiumType: formData.stadiumType,
           Date: selectedDate,
           StartTime: selectedTime,
           Price: 60,
@@ -169,7 +174,13 @@ const MobileReservationForm = ({
           CreatedBy: 'LandingPage',
           CourtId: null,
           IsPaid: false
-        });
+        };
+        
+        if (formData.email.trim()) {
+          reservationData.PlayerEmail = formData.email;
+        }
+        
+        const reservation = await reservationService.createReservation(reservationData);
 
         setReservationId(reservation.Id || reservation.id);
         setActiveStep(1);
@@ -407,7 +418,7 @@ const MobileReservationForm = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email *
+                  Email (optionnel)
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -420,7 +431,7 @@ const MobileReservationForm = ({
                         ? "border-red-300 bg-red-50"
                         : "border-gray-300"
                     }`}
-                    placeholder="votre@email.com"
+                    placeholder="votre@email.com (optionnel)"
                   />
                 </div>
                 {errors.email && (
@@ -453,6 +464,67 @@ const MobileReservationForm = ({
                     {errors.phoneNumber}
                   </p>
                 )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nombre de joueurs *
+                </label>
+                <div className="relative">
+                  <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <select
+                    value={formData.numberOfPlayers}
+                    onChange={(e) => handleInputChange("numberOfPlayers", parseInt(e.target.value))}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors appearance-none bg-white"
+                  >
+                    <option value={2}>2 joueurs</option>
+                    <option value={4}>4 joueurs</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Type de terrain *
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleInputChange("stadiumType", "indoor")}
+                    className={`p-4 border-2 rounded-xl transition-all duration-200 flex flex-col items-center justify-center space-y-2 ${
+                      formData.stadiumType === "indoor"
+                        ? "border-blue-500 bg-blue-50 text-blue-700"
+                        : "border-gray-200 hover:border-blue-300"
+                    }`}
+                  >
+                    <Home className="h-6 w-6" />
+                    <span className="font-medium">Intérieur</span>
+                    <span className="text-xs opacity-75">Terrain couvert</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleInputChange("stadiumType", "outdoor")}
+                    className={`p-4 border-2 rounded-xl transition-all duration-200 flex flex-col items-center justify-center space-y-2 ${
+                      formData.stadiumType === "outdoor"
+                        ? "border-blue-500 bg-blue-50 text-blue-700"
+                        : "border-gray-200 hover:border-blue-300"
+                    }`}
+                  >
+                    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="5" />
+                      <line x1="12" y1="1" x2="12" y2="3" />
+                      <line x1="12" y1="21" x2="12" y2="23" />
+                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                      <line x1="1" y1="12" x2="3" y2="12" />
+                      <line x1="21" y1="12" x2="23" y2="12" />
+                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                    </svg>
+                    <span className="font-medium">Extérieur</span>
+                    <span className="text-xs opacity-75">Terrain découvert</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}

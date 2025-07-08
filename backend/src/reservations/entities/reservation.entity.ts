@@ -12,6 +12,15 @@ export class Reservation {
   @Column({ type: 'varchar', length: 255 })
   PlayerPhone: string;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  PlayerEmail: string;
+
+  @Column({ type: 'int' })
+  NumberOfPlayers: number;
+
+  @Column({ type: 'varchar', length: 20 })
+  StadiumType: string;
+
   @Column({ nullable: true })
   CourtId: number;
 
@@ -34,7 +43,7 @@ export class Reservation {
   @Column({ type: 'int' })
   Status: number;
 
-  @Column({ type: 'bit', default: false })
+  @Column({ type: 'boolean', default: false })
   IsPaid: boolean;
 
   @Column({ type: 'datetime' })

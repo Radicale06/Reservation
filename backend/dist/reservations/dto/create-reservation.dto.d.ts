@@ -1,6 +1,9 @@
 export declare class CreateReservationDto {
     PlayerFullName: string;
     PlayerPhone: string;
+    PlayerEmail?: string;
+    NumberOfPlayers: number;
+    StadiumType: string;
     CourtId?: number;
     StartTime: string;
     EndTime?: string;

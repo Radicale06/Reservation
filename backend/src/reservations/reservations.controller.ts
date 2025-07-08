@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Query, ValidationPipe } from '@nestjs/common';
 import { ReservationsService } from './reservations.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { CheckAvailabilityDto } from './dto/check-availability.dto';
@@ -64,5 +64,10 @@ export class ReservationsController {
   @Get('stats/monthly')
   getMonthlyStats(@Query('year') year: string, @Query('month') month: string) {
     return this.reservationsService.getMonthlyStats(+year, +month);
+  }
+
+  @Put(':id/court')
+  updateCourt(@Param('id') id: string, @Body('courtId') courtId: number) {
+    return this.reservationsService.updateCourtAssignment(+id, courtId);
   }
 }

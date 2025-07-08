@@ -4,31 +4,53 @@ import { Repository, Between, LessThan } from 'typeorm';
 import { Reservation } from './entities/reservation.entity';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { CheckAvailabilityDto } from './dto/check-availability.dto';
+import { CourtService } from '../court/court.service';
 
 @Injectable()
 export class ReservationsService {
   constructor(
     @InjectRepository(Reservation)
     private reservationsRepository: Repository<Reservation>,
+    private courtService: CourtService,
   ) {}
 
   async create(createReservationDto: CreateReservationDto): Promise<Reservation> {
-    const { Date: reservationDate, StartTime, CourtId } = createReservationDto;
+    const { Date: reservationDate, StartTime, StadiumType } = createReservationDto;
+    let { CourtId } = createReservationDto;
     
-    const isAvailable = await this.checkAvailability({
-      date: reservationDate,
-      time: StartTime,
-      courtId: CourtId
-    });
+    // If no court is specified, automatically assign one based on stadium type
+    if (!CourtId) {
+      const availableCourt = await this.findAvailableCourtByType(
+        reservationDate,
+        StartTime,
+        StadiumType
+      );
+      
+      if (!availableCourt) {
+        throw new BadRequestException(
+          `No ${StadiumType} court available for this time slot`
+        );
+      }
+      
+      CourtId = availableCourt.Id;
+    } else {
+      // If court is specified, check if it's available
+      const isAvailable = await this.checkAvailability({
+        date: reservationDate,
+        time: StartTime,
+        courtId: CourtId
+      });
 
-    if (!isAvailable) {
-      throw new BadRequestException('This time slot is already reserved');
+      if (!isAvailable) {
+        throw new BadRequestException('This time slot is already reserved');
+      }
     }
 
     const endTime = createReservationDto.EndTime || this.calculateEndTime(StartTime);
 
     const reservation = this.reservationsRepository.create({
       ...createReservationDto,
+      CourtId,
       Date: new Date(reservationDate),
       EndTime: endTime,
       CreatedAt: new Date(),
@@ -103,6 +125,7 @@ export class ReservationsService {
 
   async findAll(): Promise<Reservation[]> {
     return this.reservationsRepository.find({
+      relations: ['court'],
       order: {
         Date: 'DESC',
         StartTime: 'ASC'
@@ -153,7 +176,8 @@ export class ReservationsService {
 
   async findById(id: number): Promise<Reservation> {
     const reservation = await this.reservationsRepository.findOne({
-      where: { Id: id }
+      where: { Id: id },
+      relations: ['court']
     });
 
     if (!reservation) {
@@ -192,6 +216,60 @@ export class ReservationsService {
     return hours * 60 + minutes;
   }
 
+  async findAvailableCourtByType(
+    date: string,
+    time: string,
+    stadiumType: string
+  ): Promise<any> {
+    // Get all active courts of the specified type
+    const courts = await this.courtService.findActive();
+    const courtsOfType = courts.filter(
+      court => court.StadiumType.toLowerCase() === stadiumType.toLowerCase()
+    );
+
+    if (courtsOfType.length === 0) {
+      return null;
+    }
+
+    // Check availability for each court
+    for (const court of courtsOfType) {
+      const isAvailable = await this.checkAvailability({
+        date,
+        time,
+        courtId: court.Id
+      });
+
+      if (isAvailable) {
+        return court;
+      }
+    }
+
+    return null;
+  }
+
+  async updateCourtAssignment(
+    reservationId: number,
+    newCourtId: number
+  ): Promise<Reservation> {
+    const reservation = await this.findById(reservationId);
+
+    // Check if the new court is available for this time slot
+    const isAvailable = await this.checkAvailability({
+      date: reservation.Date.toISOString().split('T')[0],
+      time: reservation.StartTime,
+      courtId: newCourtId
+    });
+
+    if (!isAvailable) {
+      throw new BadRequestException(
+        'The selected court is not available for this time slot'
+      );
+    }
+
+    reservation.CourtId = newCourtId;
+    return this.reservationsRepository.save(reservation);
+  }
+
   async getDailyStats(date: Date): Promise<any> {
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
@@ -202,7 +280,8 @@ export class ReservationsService {
     const reservations = await this.reservationsRepository.find({
       where: {
         Date: Between(startOfDay, endOfDay)
-      }
+      },
+      relations: ['court']
     });
 
     const totalReservations = reservations.length;

@@ -16,6 +16,7 @@ let Court = class Court {
     Name;
     Description;
     Type;
+    StadiumType;
     Image;
     IsActive;
     CreatedAt;
@@ -38,11 +39,15 @@ __decorate([
     __metadata("design:type", String)
 ], Court.prototype, "Type", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 20, default: 'outdoor' }),
+    __metadata("design:type", String)
+], Court.prototype, "StadiumType", void 0);
+__decorate([
     (0, typeorm_1.Column)({ type: 'blob', nullable: true }),
     __metadata("design:type", Buffer)
 ], Court.prototype, "Image", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'bit', default: true }),
+    (0, typeorm_1.Column)({ type: 'boolean', default: true }),
     __metadata("design:type", Boolean)
 ], Court.prototype, "IsActive", void 0);
 __decorate([
