@@ -9,6 +9,7 @@ export declare class ReservationsService {
     constructor(reservationsRepository: Repository<Reservation>, courtService: CourtService);
     create(createReservationDto: CreateReservationDto): Promise<Reservation>;
     checkAvailability(checkAvailabilityDto: CheckAvailabilityDto): Promise<boolean>;
+    checkSpecificCourtAvailability(checkAvailabilityDto: CheckAvailabilityDto): Promise<boolean>;
     getAvailableSlots(date: string, courtId?: number): Promise<string[]>;
     findAll(): Promise<Reservation[]>;
     findByDateRange(startDate: Date, endDate: Date): Promise<Reservation[]>;
