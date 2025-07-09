@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, LessThan } from 'typeorm';
+import { Repository, Between, LessThan, DataSource } from 'typeorm';
 import { Reservation } from './entities/reservation.entity';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { CheckAvailabilityDto } from './dto/check-availability.dto';
@@ -12,52 +12,57 @@ export class ReservationsService {
     @InjectRepository(Reservation)
     private reservationsRepository: Repository<Reservation>,
     private courtService: CourtService,
+    private dataSource: DataSource,
   ) {}
 
   async create(createReservationDto: CreateReservationDto): Promise<Reservation> {
-    const { Date: reservationDate, StartTime, StadiumType } = createReservationDto;
-    let { CourtId } = createReservationDto;
-    
-    // If no court is specified, automatically assign one based on stadium type
-    if (!CourtId) {
-      const availableCourt = await this.findAvailableCourtByType(
-        reservationDate,
-        StartTime,
-        StadiumType
-      );
+    // Use a transaction to prevent race conditions in court assignment
+    return await this.dataSource.transaction(async manager => {
+      const { Date: reservationDate, StartTime, StadiumType } = createReservationDto;
+      let { CourtId } = createReservationDto;
       
-      if (!availableCourt) {
-        throw new BadRequestException(
-          `No ${StadiumType} court available for this time slot`
+      // If no court is specified, automatically assign one based on stadium type
+      if (!CourtId) {
+        const availableCourt = await this.findAvailableCourtByTypeWithTransaction(
+          reservationDate,
+          StartTime,
+          StadiumType,
+          manager
         );
+        
+        if (!availableCourt) {
+          throw new BadRequestException(
+            `No ${StadiumType} court available for this time slot`
+          );
+        }
+        
+        CourtId = availableCourt.Id;
+      } else {
+        // If court is specified, check if it's available
+        const isAvailable = await this.checkAvailabilityWithTransaction({
+          date: reservationDate,
+          time: StartTime,
+          courtId: CourtId
+        }, manager);
+
+        if (!isAvailable) {
+          throw new BadRequestException('This time slot is already reserved');
+        }
       }
-      
-      CourtId = availableCourt.Id;
-    } else {
-      // If court is specified, check if it's available
-      const isAvailable = await this.checkAvailability({
-        date: reservationDate,
-        time: StartTime,
-        courtId: CourtId
+
+      const endTime = createReservationDto.EndTime || this.calculateEndTime(StartTime);
+
+      const reservation = manager.create(Reservation, {
+        ...createReservationDto,
+        CourtId,
+        Date: new Date(reservationDate),
+        EndTime: endTime,
+        CreatedAt: new Date(),
+        IsPaid: createReservationDto.IsPaid || false,
       });
 
-      if (!isAvailable) {
-        throw new BadRequestException('This time slot is already reserved');
-      }
-    }
-
-    const endTime = createReservationDto.EndTime || this.calculateEndTime(StartTime);
-
-    const reservation = this.reservationsRepository.create({
-      ...createReservationDto,
-      CourtId,
-      Date: new Date(reservationDate),
-      EndTime: endTime,
-      CreatedAt: new Date(),
-      IsPaid: createReservationDto.IsPaid || false,
+      return await manager.save(reservation);
     });
-
-    return this.reservationsRepository.save(reservation);
   }
 
   async checkAvailability(checkAvailabilityDto: CheckAvailabilityDto): Promise<boolean> {
@@ -245,6 +250,63 @@ export class ReservationsService {
     }
 
     return null;
+  }
+
+  private async findAvailableCourtByTypeWithTransaction(
+    date: string,
+    time: string,
+    stadiumType: string,
+    manager: any
+  ): Promise<any> {
+    // Get all active courts of the specified type
+    const courts = await this.courtService.findActive();
+    const courtsOfType = courts.filter(
+      court => court.StadiumType.toLowerCase() === stadiumType.toLowerCase()
+    );
+
+    if (courtsOfType.length === 0) {
+      return null;
+    }
+
+    // Check availability for each court within the transaction
+    for (const court of courtsOfType) {
+      const isAvailable = await this.checkAvailabilityWithTransaction({
+        date,
+        time,
+        courtId: court.Id
+      }, manager);
+
+      if (isAvailable) {
+        return court;
+      }
+    }
+
+    return null;
+  }
+
+  private async checkAvailabilityWithTransaction(
+    checkAvailabilityDto: CheckAvailabilityDto,
+    manager: any
+  ): Promise<boolean> {
+    const { date, time, courtId } = checkAvailabilityDto;
+    const reservationDate = new Date(date);
+    
+    const newStartTime = time;
+    const newEndTime = this.calculateEndTime(time);
+
+    // Check for any overlapping reservations using the transaction manager
+    const overlappingReservations = await manager
+      .createQueryBuilder(Reservation, 'reservation')
+      .where('reservation.Date = :date', { date: reservationDate })
+      .andWhere('reservation.Status IN (:...statuses)', { statuses: [1, 2, 4] })
+      .andWhere('reservation.CourtId = :courtId', { courtId })
+      .andWhere(
+        '(reservation.StartTime < :newEndTime AND reservation.EndTime > :newStartTime)',
+        { newStartTime, newEndTime }
+      )
+      .getMany();
+
+    return overlappingReservations.length === 0;
   }
 
   async updateCourtAssignment(
