@@ -40,10 +40,15 @@ const Reservations = () => {
   const loadData = async () => {
     try {
       setLoading(true);
+      console.log('Loading reservations and courts...');
       const [reservationsResponse, courtsResponse] = await Promise.all([
         reservations.getAll(),
         courts.getAll()
       ]);
+      console.log('Reservations response:', reservationsResponse);
+      console.log('Courts response:', courtsResponse);
+      console.log('Reservations data:', reservationsResponse.data);
+      console.log('Courts data:', courtsResponse.data);
       setReservationsList(reservationsResponse.data);
       setCourtsList(courtsResponse.data);
     } catch (error) {

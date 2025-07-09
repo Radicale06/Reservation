@@ -84,7 +84,9 @@ INSERT INTO Account (UserName, Password, FullName, CreatedAt, CreatedBy) VALUES
 INSERT INTO Court (Name, Description, Type, StadiumType, IsActive, CreatedAt) VALUES 
 ('Terrain 01', 'Terrain 01 de padel', 'Padel', 'indoor', TRUE, NOW()),
 ('Terrain 02', 'Terrain 02 Padel', 'Padel', 'outdoor', TRUE, NOW()),
-('Terrain 03', 'Terrain 03', 'Padel', 'indoor', FALSE, NOW());
+('Terrain 03', 'Terrain 03', 'Padel', 'indoor', TRUE, NOW()),
+('Terrain 04', 'Terrain 04 Padel', 'Padel', 'outdoor', TRUE, NOW()),
+('Terrain 05', 'Terrain 05 Padel', 'Padel', 'indoor', TRUE, NOW());
 
 INSERT INTO PaymentType (PaymentType) VALUES 
 ('En ligne'),
