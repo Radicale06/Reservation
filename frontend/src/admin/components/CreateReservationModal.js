@@ -4,6 +4,7 @@ import {
   Calendar,
   Clock,
   User,
+  Users,
   Phone,
   Mail,
   MapPin,
@@ -26,6 +27,8 @@ const CreateReservationModal = ({ courts, onClose, onSuccess }) => {
     playerFullName: '',
     playerPhone: '',
     playerEmail: '',
+    numberOfPlayers: 2,
+    stadiumType: 'outdoor',
     courtId: activeCourts[0]?.Id || courts[0]?.Id || '',
     date: new Date().toISOString().split('T')[0],
     startTime: '',
@@ -107,6 +110,14 @@ const CreateReservationModal = ({ courts, onClose, onSuccess }) => {
       setError('Format d\'email invalide');
       return false;
     }
+    if (!formData.numberOfPlayers || ![2, 4].includes(formData.numberOfPlayers)) {
+      setError('Le nombre de joueurs doit être 2 ou 4');
+      return false;
+    }
+    if (!formData.stadiumType || !['indoor', 'outdoor'].includes(formData.stadiumType)) {
+      setError('Le type de terrain est requis');
+      return false;
+    }
     if (!formData.startTime) {
       setError('Veuillez sélectionner une heure');
       return false;
@@ -126,17 +137,22 @@ const CreateReservationModal = ({ courts, onClose, onSuccess }) => {
       const reservationData = {
         PlayerFullName: formData.playerFullName,
         PlayerPhone: formData.playerPhone,
-        PlayerEmail: formData.playerEmail || `admin${Date.now()}@reservation.tn`,
+        NumberOfPlayers: formData.numberOfPlayers,
+        StadiumType: formData.stadiumType,
         CourtId: parseInt(formData.courtId),
         Date: formData.date,
         StartTime: formData.startTime,
         EndTime: getEndTime(formData.startTime),
-        Duration: 90,
         Price: formData.price,
         Status: 2, // Confirmée
         IsPaid: false,
         CreatedBy: 'Admin'
       };
+
+      // Add email only if provided
+      if (formData.playerEmail && formData.playerEmail.trim()) {
+        reservationData.PlayerEmail = formData.playerEmail;
+      }
 
       await reservations.create(reservationData);
       onSuccess();
@@ -214,6 +230,38 @@ const CreateReservationModal = ({ courts, onClose, onSuccess }) => {
                     value={formData.playerEmail}
                     onChange={(e) => handleInputChange('playerEmail', e.target.value)}
                   />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">
+                    <Users size={16} />
+                    Nombre de joueurs *
+                  </label>
+                  <select
+                    className="form-input"
+                    value={formData.numberOfPlayers}
+                    onChange={(e) => handleInputChange('numberOfPlayers', parseInt(e.target.value))}
+                    required
+                  >
+                    <option value={2}>2 joueurs</option>
+                    <option value={4}>4 joueurs</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">
+                    <MapPin size={16} />
+                    Type de terrain *
+                  </label>
+                  <select
+                    className="form-input"
+                    value={formData.stadiumType}
+                    onChange={(e) => handleInputChange('stadiumType', e.target.value)}
+                    required
+                  >
+                    <option value="outdoor">Extérieur</option>
+                    <option value="indoor">Intérieur</option>
+                  </select>
                 </div>
               </div>
 
@@ -307,6 +355,14 @@ const CreateReservationModal = ({ courts, onClose, onSuccess }) => {
 
                 {formData.startTime && (
                   <div className="reservation-summary">
+                    <div className="summary-item">
+                      <span>Joueurs:</span>
+                      <strong>{formData.numberOfPlayers} joueurs</strong>
+                    </div>
+                    <div className="summary-item">
+                      <span>Type:</span>
+                      <strong>{formData.stadiumType === 'indoor' ? 'Intérieur' : 'Extérieur'}</strong>
+                    </div>
                     <div className="summary-item">
                       <span>Durée:</span>
                       <strong>90 minutes</strong>
