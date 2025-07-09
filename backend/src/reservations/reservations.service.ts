@@ -18,16 +18,11 @@ export class ReservationsService {
     const { Date: reservationDate, StartTime, StadiumType, PlayerFullName } = createReservationDto;
     let { CourtId } = createReservationDto;
     
-    console.log(`\n🎾 === CREATING RESERVATION ===`);
-    console.log(`👤 Player: ${PlayerFullName}`);
-    console.log(`📅 Date: ${reservationDate}`);
-    console.log(`⏰ Time: ${StartTime}`);
-    console.log(`🏟️ Requested Stadium Type: ${StadiumType}`);
-    console.log(`🏟️ Specified Court ID: ${CourtId || 'None (auto-assign)'}`);
+
     
     // If no court is specified, automatically assign one based on stadium type
     if (!CourtId) {
-      console.log(`🔄 AUTO-ASSIGNING court based on stadium type: ${StadiumType}`);
+
       
       const availableCourt = await this.findAvailableCourtByType(
         reservationDate,
@@ -36,16 +31,13 @@ export class ReservationsService {
       );
       
       if (!availableCourt) {
-        console.log(`❌ RESERVATION FAILED: No ${StadiumType} court available`);
         throw new BadRequestException(
           `No ${StadiumType} court available for this time slot`
         );
       }
       
       CourtId = availableCourt.Id;
-      console.log(`✅ Court auto-assigned: ${availableCourt.Name} (ID: ${CourtId})`);
     } else {
-      console.log(`🔄 CHECKING specified court availability: ${CourtId}`);
       
       // If court is specified, check if it's available
       const isAvailable = await this.checkSpecificCourtAvailability({
@@ -55,11 +47,9 @@ export class ReservationsService {
       });
 
       if (!isAvailable) {
-        console.log(`❌ RESERVATION FAILED: Specified court ${CourtId} is not available`);
         throw new BadRequestException('This time slot is already reserved');
       }
       
-      console.log(`✅ Specified court ${CourtId} is available`);
     }
 
     const endTime = createReservationDto.EndTime || this.calculateEndTime(StartTime);
@@ -73,10 +63,8 @@ export class ReservationsService {
       IsPaid: createReservationDto.IsPaid || false,
     });
 
-    console.log(`💾 SAVING reservation to database...`);
+
     const savedReservation = await this.reservationsRepository.save(reservation);
-    console.log(`✅ RESERVATION CREATED SUCCESSFULLY! ID: ${savedReservation.Id}`);
-    console.log(`🎾 === END RESERVATION CREATION ===\n`);
     
     return savedReservation;
   }
@@ -111,7 +99,6 @@ export class ReservationsService {
     const { date, time, courtId } = checkAvailabilityDto;
     
     if (!courtId) {
-      console.log(`❌ No court ID provided for availability check`);
       return false;
     }
 
@@ -119,21 +106,19 @@ export class ReservationsService {
     const newStartTime = time;
     const newEndTime = this.calculateEndTime(time);
 
-    console.log(`🔍 Checking court ${courtId} availability for ${date} ${newStartTime}-${newEndTime}`);
 
     // First, verify the court exists and is active
     const court = await this.courtService.findOne(courtId);
     if (!court) {
-      console.log(`❌ Court ${courtId} not found`);
+
       return false;
     }
     
     if (!court.IsActive) {
-      console.log(`❌ Court ${courtId} (${court.Name}) is inactive`);
+
       return false;
     }
 
-    console.log(`✅ Court ${courtId} (${court.Name}) is active and exists`);
 
     // Check for any overlapping reservations for this specific court
     const overlappingReservations = await this.reservationsRepository
@@ -147,7 +132,6 @@ export class ReservationsService {
       )
       .getMany();
 
-    console.log(`📊 Found ${overlappingReservations.length} overlapping reservations for court ${courtId}`);
     
     if (overlappingReservations.length > 0) {
       console.log(`⚠️ Overlapping reservations:`, overlappingReservations.map(r => 
