@@ -10,7 +10,8 @@ import {
   MapPin,
   DollarSign,
   AlertCircle,
-  Loader2
+  Loader2,
+  CreditCard
 } from 'lucide-react';
 import { reservations } from '../services/adminApi';
 import { reservationService } from '../../services/api';
