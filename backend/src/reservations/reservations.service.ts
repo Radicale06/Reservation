@@ -72,7 +72,7 @@ export class ReservationsService {
     const queryBuilder = this.reservationsRepository
       .createQueryBuilder('reservation')
       .where('reservation.Date = :date', { date: reservationDate })
-      .andWhere('reservation.Status IN (:...statuses)', { statuses: [1, 2, 4] }) // En attente, Confirmée, Payée
+      .andWhere('reservation.Status IN (:...statuses)', { statuses: [1, 2] }) // En attente, Payée
       .andWhere(
         '(reservation.StartTime < :newEndTime AND reservation.EndTime > :newStartTime)',
         { newStartTime, newEndTime }
@@ -113,7 +113,7 @@ export class ReservationsService {
       .createQueryBuilder('reservation')
       .where('reservation.Date = :date', { date: reservationDate })
       .andWhere('reservation.CourtId = :courtId', { courtId })
-      .andWhere('reservation.Status IN (:...statuses)', { statuses: [1, 2, 4] }) // En attente, Confirmée, Payée
+      .andWhere('reservation.Status IN (:...statuses)', { statuses: [1, 2] }) // En attente, Payée
       .andWhere(
         '(reservation.StartTime < :newEndTime AND reservation.EndTime > :newStartTime)',
         { newStartTime, newEndTime }
@@ -192,13 +192,13 @@ export class ReservationsService {
       throw new BadRequestException('Reservation not found');
     }
 
-    reservation.Status = 4; // Payée
+    reservation.Status = 2; // Payée
     reservation.IsPaid = true;
 
     return this.reservationsRepository.save(reservation);
   }
 
-  async cancelReservation(reservationId: number): Promise<Reservation> {
+  async cancelReservation(reservationId: number): Promise<void> {
     const reservation = await this.reservationsRepository.findOne({
       where: { Id: reservationId }
     });
@@ -207,7 +207,23 @@ export class ReservationsService {
       throw new BadRequestException('Reservation not found');
     }
 
-    reservation.Status = 3; // Annulée
+    // Simply delete the reservation instead of marking as cancelled
+    await this.reservationsRepository.remove(reservation);
+  }
+
+  async togglePaymentStatus(reservationId: number): Promise<Reservation> {
+    const reservation = await this.reservationsRepository.findOne({
+      where: { Id: reservationId }
+    });
+
+    if (!reservation) {
+      throw new BadRequestException('Reservation not found');
+    }
+
+    // Toggle between status 1 (en attente) and 2 (payé)
+    reservation.Status = reservation.Status === 1 ? 2 : 1;
+    reservation.IsPaid = reservation.Status === 2;
+
     return this.reservationsRepository.save(reservation);
   }
 
@@ -258,37 +274,23 @@ export class ReservationsService {
     time: string,
     stadiumType: string
   ): Promise<any> {
-    // Get all active courts of the specified type
-    const allCourts = await this.courtService.findActive();
+    // Get current court assignments to make intelligent decisions
+    const assignments = await this.getCourtAssignments(date, time);
     
-    // Filter by stadium type (indoor/outdoor) and ensure only active courts
-    const courtsOfType = allCourts.filter(
-      court => court.IsActive && court.StadiumType && court.StadiumType.toLowerCase() === stadiumType.toLowerCase()
-    );
-
-    if (courtsOfType.length === 0) {
+    // Get available courts for the requested stadium type
+    const availableCourts = assignments[stadiumType]?.available || [];
+    
+    if (availableCourts.length === 0) {
       return null;
     }
-
-    // Check availability for each active court of the requested type
-    for (const court of courtsOfType) {
-      // Double-check that the court is still active before checking availability
-      if (!court.IsActive) {
-        continue;
-      }
-      
-      const isAvailable = await this.checkSpecificCourtAvailability({
-        date,
-        time,
-        courtId: court.Id
-      });
-
-      if (isAvailable) {
-        return court;
-      }
-    }
-
-    return null;
+    
+    // Return the first available court (you could add more logic here for optimization)
+    // For example: prefer courts with specific sport types, or load balancing
+    const selectedCourt = availableCourts[0];
+    
+    // Get full court details
+    const allCourts = await this.courtService.findActive();
+    return allCourts.find(court => court.Id === selectedCourt.courtId);
   }
 
   async updateCourtAssignment(
@@ -329,19 +331,17 @@ export class ReservationsService {
     });
 
     const totalReservations = reservations.length;
-    const confirmedReservations = reservations.filter(r => r.Status === 2).length;
-    const paidReservations = reservations.filter(r => r.Status === 4).length;
-    const cancelledReservations = reservations.filter(r => r.Status === 3).length;
+    const paidReservations = reservations.filter(r => r.Status === 2).length;
+    const pendingReservations = reservations.filter(r => r.Status === 1).length;
     const totalRevenue = reservations
-      .filter(r => r.Status === 4)
+      .filter(r => r.Status === 2)
       .reduce((sum, r) => sum + Number(r.Price), 0);
 
     return {
       date,
       totalReservations,
-      confirmedReservations,
+      pendingReservations,
       paidReservations,
-      cancelledReservations,
       totalRevenue,
       reservations
     };
@@ -354,7 +354,7 @@ export class ReservationsService {
     const reservations = await this.reservationsRepository.find({
       where: {
         Date: Between(startDate, endDate),
-        Status: 4 // Payée
+        Status: 2 // Payée
       }
     });
 
@@ -382,5 +382,120 @@ export class ReservationsService {
       totalRevenue,
       dailyStats
     };
+  }
+
+  async getAvailableStadiumTypes(date: string, time: string): Promise<{
+    indoor: { available: boolean; courts: number; availableCourts: any[] };
+    outdoor: { available: boolean; courts: number; availableCourts: any[] };
+  }> {
+    // Get all active courts
+    const allCourts = await this.courtService.findActive();
+    
+    // Separate by stadium type (handle legacy courts without StadiumType)
+    const indoorCourts = allCourts.filter(court => {
+      const stadiumType = court.StadiumType || court.Type || 'outdoor';
+      return stadiumType.toLowerCase().includes('indoor') || stadiumType.toLowerCase().includes('int');
+    });
+    
+    const outdoorCourts = allCourts.filter(court => {
+      const stadiumType = court.StadiumType || court.Type || 'outdoor';
+      return stadiumType.toLowerCase().includes('outdoor') || 
+             stadiumType.toLowerCase().includes('ext') ||
+             (!stadiumType.toLowerCase().includes('indoor') && !stadiumType.toLowerCase().includes('int'));
+    });
+    
+    // Check availability for each type
+    const checkTypeAvailability = async (courts: any[]) => {
+      const availableCourts: any[] = [];
+      
+      for (const court of courts) {
+        const isAvailable = await this.checkSpecificCourtAvailability({
+          date,
+          time,
+          courtId: court.Id
+        });
+        
+        if (isAvailable) {
+          availableCourts.push(court);
+        }
+      }
+      
+      return {
+        available: availableCourts.length > 0,
+        courts: courts.length,
+        availableCourts
+      };
+    };
+    
+    const [indoorAvailability, outdoorAvailability] = await Promise.all([
+      checkTypeAvailability(indoorCourts),
+      checkTypeAvailability(outdoorCourts)
+    ]);
+    
+    return {
+      indoor: indoorAvailability,
+      outdoor: outdoorAvailability
+    };
+  }
+
+  async getCourtAssignments(date: string, time: string): Promise<any> {
+    const reservationDate = new Date(date);
+    const endTime = this.calculateEndTime(time);
+    
+    // Get all reservations that overlap with the requested time
+    const overlappingReservations = await this.reservationsRepository
+      .createQueryBuilder('reservation')
+      .leftJoinAndSelect('reservation.court', 'court')
+      .where('reservation.Date = :date', { date: reservationDate })
+      .andWhere('reservation.Status IN (:...statuses)', { statuses: [1, 2, 4] })
+      .andWhere(
+        '(reservation.StartTime < :endTime AND reservation.EndTime > :startTime)',
+        { startTime: time, endTime }
+      )
+      .getMany();
+    
+    // Get all active courts
+    const allCourts = await this.courtService.findActive();
+    
+    // Create assignment map
+    const assignments = {
+      indoor: {
+        total: allCourts.filter(c => c.StadiumType === 'indoor').length,
+        occupied: [] as any[],
+        available: [] as any[]
+      },
+      outdoor: {
+        total: allCourts.filter(c => c.StadiumType === 'outdoor').length,
+        occupied: [] as any[],
+        available: [] as any[]
+      }
+    };
+    
+    // Mark occupied courts
+    overlappingReservations.forEach(reservation => {
+      if (reservation.court) {
+        const type = reservation.court.StadiumType;
+        assignments[type].occupied.push({
+          courtId: reservation.court.Id,
+          courtName: reservation.court.Name,
+          reservationId: reservation.Id,
+          playerName: reservation.PlayerFullName
+        });
+      }
+    });
+    
+    // Mark available courts
+    allCourts.forEach(court => {
+      const isOccupied = overlappingReservations.some(r => r.CourtId === court.Id);
+      if (!isOccupied) {
+        assignments[court.StadiumType].available.push({
+          courtId: court.Id,
+          courtName: court.Name,
+          sportType: court.SportType
+        });
+      }
+    });
+    
+    return assignments;
   }
 }

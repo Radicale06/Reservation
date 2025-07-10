@@ -17,6 +17,7 @@ let Court = class Court {
     Description;
     Type;
     StadiumType;
+    SportType;
     Image;
     IsActive;
     CreatedAt;
@@ -42,6 +43,10 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 20, default: 'outdoor' }),
     __metadata("design:type", String)
 ], Court.prototype, "StadiumType", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 50, default: 'padel' }),
+    __metadata("design:type", String)
+], Court.prototype, "SportType", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'blob', nullable: true }),
     __metadata("design:type", Buffer)

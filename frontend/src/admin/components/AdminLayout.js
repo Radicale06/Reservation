@@ -32,6 +32,7 @@ const AdminLayout = () => {
     { path: '/admin/reservations', icon: <Calendar size={20} />, label: 'Réservations' },
     { path: '/admin/courts', icon: <MapPin size={20} />, label: 'Terrains' },
     { path: '/admin/statistics', icon: <BarChart3 size={20} />, label: 'Statistiques' },
+    { path: '/admin/settings', icon: <Settings size={20} />, label: 'Paramètres' },
   ];
 
   return (

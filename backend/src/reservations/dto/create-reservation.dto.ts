@@ -15,7 +15,7 @@ export class CreateReservationDto {
 
   @IsNotEmpty()
   @IsNumber()
-  @IsIn([2, 4], { message: 'Number of players must be either 2 or 4' })
+  @Min(1)
   NumberOfPlayers: number;
 
   @IsNotEmpty()

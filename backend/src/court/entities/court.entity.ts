@@ -17,6 +17,9 @@ export class Court {
   @Column({ type: 'varchar', length: 20, default: 'outdoor' })
   StadiumType: string;
 
+  @Column({ type: 'varchar', length: 50, default: 'padel' })
+  SportType: string;
+
   @Column({ type: 'blob', nullable: true })
   Image: Buffer;
 

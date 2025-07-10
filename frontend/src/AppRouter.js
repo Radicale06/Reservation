@@ -10,6 +10,7 @@ import AdminLayout from './admin/components/AdminLayout';
 import Dashboard from './admin/pages/Dashboard';
 import Reservations from './admin/pages/Reservations';
 import Courts from './admin/pages/Courts';
+import Settings from './admin/pages/Settings';
 import ProtectedRoute from './admin/components/ProtectedRoute';
 
 // Import admin styles
@@ -38,6 +39,7 @@ const AppRouter = () => {
           <Route path="reservations" element={<Reservations />} />
           <Route path="courts" element={<Courts />} />
           <Route path="statistics" element={<Dashboard />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
         
         {/* Catch all route - redirect to home */}

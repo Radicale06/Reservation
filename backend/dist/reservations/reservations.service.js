@@ -198,25 +198,14 @@ let ReservationsService = class ReservationsService {
         return hours * 60 + minutes;
     }
     async findAvailableCourtByType(date, time, stadiumType) {
-        const allCourts = await this.courtService.findActive();
-        const courtsOfType = allCourts.filter(court => court.IsActive && court.StadiumType && court.StadiumType.toLowerCase() === stadiumType.toLowerCase());
-        if (courtsOfType.length === 0) {
+        const assignments = await this.getCourtAssignments(date, time);
+        const availableCourts = assignments[stadiumType]?.available || [];
+        if (availableCourts.length === 0) {
             return null;
         }
-        for (const court of courtsOfType) {
-            if (!court.IsActive) {
-                continue;
-            }
-            const isAvailable = await this.checkSpecificCourtAvailability({
-                date,
-                time,
-                courtId: court.Id
-            });
-            if (isAvailable) {
-                return court;
-            }
-        }
-        return null;
+        const selectedCourt = availableCourts[0];
+        const allCourts = await this.courtService.findActive();
+        return allCourts.find(court => court.Id === selectedCourt.courtId);
     }
     async updateCourtAssignment(reservationId, newCourtId) {
         const reservation = await this.findById(reservationId);
@@ -289,6 +278,91 @@ let ReservationsService = class ReservationsService {
             totalRevenue,
             dailyStats
         };
+    }
+    async getAvailableStadiumTypes(date, time) {
+        const allCourts = await this.courtService.findActive();
+        const indoorCourts = allCourts.filter(court => {
+            const stadiumType = court.StadiumType || court.Type || 'outdoor';
+            return stadiumType.toLowerCase().includes('indoor') || stadiumType.toLowerCase().includes('int');
+        });
+        const outdoorCourts = allCourts.filter(court => {
+            const stadiumType = court.StadiumType || court.Type || 'outdoor';
+            return stadiumType.toLowerCase().includes('outdoor') ||
+                stadiumType.toLowerCase().includes('ext') ||
+                (!stadiumType.toLowerCase().includes('indoor') && !stadiumType.toLowerCase().includes('int'));
+        });
+        const checkTypeAvailability = async (courts) => {
+            const availableCourts = [];
+            for (const court of courts) {
+                const isAvailable = await this.checkSpecificCourtAvailability({
+                    date,
+                    time,
+                    courtId: court.Id
+                });
+                if (isAvailable) {
+                    availableCourts.push(court);
+                }
+            }
+            return {
+                available: availableCourts.length > 0,
+                courts: courts.length,
+                availableCourts
+            };
+        };
+        const [indoorAvailability, outdoorAvailability] = await Promise.all([
+            checkTypeAvailability(indoorCourts),
+            checkTypeAvailability(outdoorCourts)
+        ]);
+        return {
+            indoor: indoorAvailability,
+            outdoor: outdoorAvailability
+        };
+    }
+    async getCourtAssignments(date, time) {
+        const reservationDate = new Date(date);
+        const endTime = this.calculateEndTime(time);
+        const overlappingReservations = await this.reservationsRepository
+            .createQueryBuilder('reservation')
+            .leftJoinAndSelect('reservation.court', 'court')
+            .where('reservation.Date = :date', { date: reservationDate })
+            .andWhere('reservation.Status IN (:...statuses)', { statuses: [1, 2, 4] })
+            .andWhere('(reservation.StartTime < :endTime AND reservation.EndTime > :startTime)', { startTime: time, endTime })
+            .getMany();
+        const allCourts = await this.courtService.findActive();
+        const assignments = {
+            indoor: {
+                total: allCourts.filter(c => c.StadiumType === 'indoor').length,
+                occupied: [],
+                available: []
+            },
+            outdoor: {
+                total: allCourts.filter(c => c.StadiumType === 'outdoor').length,
+                occupied: [],
+                available: []
+            }
+        };
+        overlappingReservations.forEach(reservation => {
+            if (reservation.court) {
+                const type = reservation.court.StadiumType;
+                assignments[type].occupied.push({
+                    courtId: reservation.court.Id,
+                    courtName: reservation.court.Name,
+                    reservationId: reservation.Id,
+                    playerName: reservation.PlayerFullName
+                });
+            }
+        });
+        allCourts.forEach(court => {
+            const isOccupied = overlappingReservations.some(r => r.CourtId === court.Id);
+            if (!isOccupied) {
+                assignments[court.StadiumType].available.push({
+                    courtId: court.Id,
+                    courtName: court.Name,
+                    sportType: court.SportType
+                });
+            }
+        });
+        return assignments;
     }
 };
 exports.ReservationsService = ReservationsService;

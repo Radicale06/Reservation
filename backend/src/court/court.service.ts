@@ -17,9 +17,27 @@ export class CourtService {
   }
 
   async findActive() {
-    return this.courtRepository.find({
+    const courts = await this.courtRepository.find({
       where: { IsActive: true },
       order: { Name: 'ASC' },
+    });
+    
+    // Normalize legacy courts without StadiumType
+    return courts.map(court => {
+      if (!court.StadiumType) {
+        // Infer from Type field or default to outdoor
+        if (court.Type && court.Type.toLowerCase().includes('indoor')) {
+          court.StadiumType = 'indoor';
+        } else {
+          court.StadiumType = 'outdoor';
+        }
+      }
+      
+      if (!court.SportType) {
+        court.SportType = 'padel';
+      }
+      
+      return court;
     });
   }
 

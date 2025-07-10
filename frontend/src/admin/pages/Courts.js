@@ -23,7 +23,9 @@ const Courts = () => {
   const [formData, setFormData] = useState({
     Name: '',
     Description: '',
-    Type: 'Indoor',
+    Type: 'Court',
+    StadiumType: 'outdoor',
+    SportType: 'padel',
     IsActive: true
   });
 
@@ -52,7 +54,7 @@ const Courts = () => {
       };
       await courts.create(courtData);
       setShowCreateModal(false);
-      setFormData({ Name: '', Description: '', Type: 'Indoor', IsActive: true });
+      setFormData({ Name: '', Description: '', Type: 'Court', StadiumType: 'outdoor', SportType: 'padel', IsActive: true });
       loadCourts();
     } catch (error) {
       console.error('Error creating court:', error);
@@ -66,7 +68,7 @@ const Courts = () => {
       await courts.update(selectedCourt.Id, formData);
       setShowEditModal(false);
       setSelectedCourt(null);
-      setFormData({ Name: '', Description: '', Type: 'Indoor', IsActive: true });
+      setFormData({ Name: '', Description: '', Type: 'Court', StadiumType: 'outdoor', SportType: 'padel', IsActive: true });
       loadCourts();
     } catch (error) {
       console.error('Error updating court:', error);
@@ -89,7 +91,9 @@ const Courts = () => {
     setFormData({
       Name: court.Name,
       Description: court.Description || '',
-      Type: court.Type,
+      Type: court.Type || 'Court',
+      StadiumType: court.StadiumType || 'outdoor',
+      SportType: court.SportType || 'padel',
       IsActive: court.IsActive
     });
     setShowEditModal(true);
@@ -150,9 +154,14 @@ const Courts = () => {
             <div className="court-header">
               <div className="court-info">
                 <h3>{court.Name}</h3>
-                <span className={`court-type ${court.Type.toLowerCase()}`}>
-                  {court.Type}
-                </span>
+                <div className="court-tags">
+                  <span className={`court-type ${court.StadiumType?.toLowerCase() || 'outdoor'}`}>
+                    {court.StadiumType === 'indoor' ? 'Intérieur' : 'Extérieur'}
+                  </span>
+                  <span className="sport-type">
+                    {court.SportType || 'Padel'}
+                  </span>
+                </div>
               </div>
               <div className="court-status">
                 {court.IsActive ? (
@@ -252,15 +261,31 @@ const Courts = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="type">Type *</label>
+                <label htmlFor="stadiumType">Type de terrain *</label>
                 <select
-                  id="type"
-                  value={formData.Type}
-                  onChange={(e) => setFormData({...formData, Type: e.target.value})}
+                  id="stadiumType"
+                  value={formData.StadiumType}
+                  onChange={(e) => setFormData({...formData, StadiumType: e.target.value})}
                   required
                 >
-                  <option value="Indoor">Indoor</option>
-                  <option value="Outdoor">Outdoor</option>
+                  <option value="outdoor">Extérieur</option>
+                  <option value="indoor">Intérieur</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="sportType">Type de sport *</label>
+                <select
+                  id="sportType"
+                  value={formData.SportType}
+                  onChange={(e) => setFormData({...formData, SportType: e.target.value})}
+                  required
+                >
+                  <option value="padel">Padel</option>
+                  <option value="tennis">Tennis</option>
+                  <option value="football">Football</option>
+                  <option value="basketball">Basketball</option>
+                  <option value="volleyball">Volleyball</option>
                 </select>
               </div>
 
@@ -324,15 +349,31 @@ const Courts = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="edit-type">Type *</label>
+                <label htmlFor="edit-stadiumType">Type de terrain *</label>
                 <select
-                  id="edit-type"
-                  value={formData.Type}
-                  onChange={(e) => setFormData({...formData, Type: e.target.value})}
+                  id="edit-stadiumType"
+                  value={formData.StadiumType}
+                  onChange={(e) => setFormData({...formData, StadiumType: e.target.value})}
                   required
                 >
-                  <option value="Indoor">Indoor</option>
-                  <option value="Outdoor">Outdoor</option>
+                  <option value="outdoor">Extérieur</option>
+                  <option value="indoor">Intérieur</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="edit-sportType">Type de sport *</label>
+                <select
+                  id="edit-sportType"
+                  value={formData.SportType}
+                  onChange={(e) => setFormData({...formData, SportType: e.target.value})}
+                  required
+                >
+                  <option value="padel">Padel</option>
+                  <option value="tennis">Tennis</option>
+                  <option value="football">Football</option>
+                  <option value="basketball">Basketball</option>
+                  <option value="volleyball">Volleyball</option>
                 </select>
               </div>
 

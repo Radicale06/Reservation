@@ -55,6 +55,18 @@ let ReservationsController = class ReservationsController {
     updateCourt(id, courtId) {
         return this.reservationsService.updateCourtAssignment(+id, courtId);
     }
+    getStadiumAvailability(date, time) {
+        return this.reservationsService.getAvailableStadiumTypes(date, time);
+    }
+    getCourtAssignments(date, time) {
+        return this.reservationsService.getCourtAssignments(date, time);
+    }
+    async debugAvailability(date, time) {
+        console.log('Debug availability for:', { date, time });
+        const result = await this.reservationsService.getAvailableStadiumTypes(date, time);
+        console.log('Result:', result);
+        return result;
+    }
 };
 exports.ReservationsController = ReservationsController;
 __decorate([
@@ -138,6 +150,30 @@ __decorate([
     __metadata("design:paramtypes", [String, Number]),
     __metadata("design:returntype", void 0)
 ], ReservationsController.prototype, "updateCourt", null);
+__decorate([
+    (0, common_1.Get)('stadium-availability'),
+    __param(0, (0, common_1.Query)('date')),
+    __param(1, (0, common_1.Query)('time')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], ReservationsController.prototype, "getStadiumAvailability", null);
+__decorate([
+    (0, common_1.Get)('court-assignments'),
+    __param(0, (0, common_1.Query)('date')),
+    __param(1, (0, common_1.Query)('time')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], ReservationsController.prototype, "getCourtAssignments", null);
+__decorate([
+    (0, common_1.Get)('debug-availability'),
+    __param(0, (0, common_1.Query)('date')),
+    __param(1, (0, common_1.Query)('time')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], ReservationsController.prototype, "debugAvailability", null);
 exports.ReservationsController = ReservationsController = __decorate([
     (0, common_1.Controller)('reservations'),
     __metadata("design:paramtypes", [reservations_service_1.ReservationsService])

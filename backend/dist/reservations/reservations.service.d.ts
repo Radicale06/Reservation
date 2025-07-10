@@ -23,4 +23,17 @@ export declare class ReservationsService {
     updateCourtAssignment(reservationId: number, newCourtId: number): Promise<Reservation>;
     getDailyStats(date: Date): Promise<any>;
     getMonthlyStats(year: number, month: number): Promise<any>;
+    getAvailableStadiumTypes(date: string, time: string): Promise<{
+        indoor: {
+            available: boolean;
+            courts: number;
+            availableCourts: any[];
+        };
+        outdoor: {
+            available: boolean;
+            courts: number;
+            availableCourts: any[];
+        };
+    }>;
+    getCourtAssignments(date: string, time: string): Promise<any>;
 }

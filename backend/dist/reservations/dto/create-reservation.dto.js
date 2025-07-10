@@ -45,7 +45,7 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.IsIn)([2, 4], { message: 'Number of players must be either 2 or 4' }),
+    (0, class_validator_1.Min)(1),
     __metadata("design:type", Number)
 ], CreateReservationDto.prototype, "NumberOfPlayers", void 0);
 __decorate([

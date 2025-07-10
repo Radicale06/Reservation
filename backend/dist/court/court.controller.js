@@ -15,6 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CourtController = void 0;
 const common_1 = require("@nestjs/common");
 const court_service_1 = require("./court.service");
+const create_court_dto_1 = require("./dto/create-court.dto");
+const update_court_dto_1 = require("./dto/update-court.dto");
 let CourtController = class CourtController {
     courtService;
     constructor(courtService) {
@@ -37,6 +39,20 @@ let CourtController = class CourtController {
     }
     async toggleActive(id) {
         return this.courtService.toggleActive(+id);
+    }
+    async debug() {
+        const courts = await this.courtService.findAll();
+        return {
+            totalCourts: courts.length,
+            courts: courts.map(court => ({
+                id: court.Id,
+                name: court.Name,
+                type: court.Type,
+                stadiumType: court.StadiumType,
+                sportType: court.SportType,
+                isActive: court.IsActive
+            }))
+        };
     }
 };
 exports.CourtController = CourtController;
@@ -63,7 +79,7 @@ __decorate([
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [create_court_dto_1.CreateCourtDto]),
     __metadata("design:returntype", Promise)
 ], CourtController.prototype, "create", null);
 __decorate([
@@ -71,7 +87,7 @@ __decorate([
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, update_court_dto_1.UpdateCourtDto]),
     __metadata("design:returntype", Promise)
 ], CourtController.prototype, "update", null);
 __decorate([
@@ -81,6 +97,12 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], CourtController.prototype, "toggleActive", null);
+__decorate([
+    (0, common_1.Get)('debug'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], CourtController.prototype, "debug", null);
 exports.CourtController = CourtController = __decorate([
     (0, common_1.Controller)('courts'),
     __metadata("design:paramtypes", [court_service_1.CourtService])

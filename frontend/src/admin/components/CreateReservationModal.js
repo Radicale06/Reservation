@@ -20,6 +20,7 @@ const CreateReservationModal = ({ courts, onClose, onSuccess }) => {
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [error, setError] = useState('');
   const [availableSlots, setAvailableSlots] = useState([]);
+  const [courtAssignments, setCourtAssignments] = useState(null);
   
   const activeCourts = courts.filter(court => court.IsActive);
   
@@ -28,11 +29,11 @@ const CreateReservationModal = ({ courts, onClose, onSuccess }) => {
     playerPhone: '',
     playerEmail: '',
     numberOfPlayers: 2,
-    stadiumType: 'outdoor',
     courtId: activeCourts[0]?.Id || courts[0]?.Id || '',
     date: new Date().toISOString().split('T')[0],
     startTime: '',
-    price: 60
+    price: 60,
+    isPaid: false
   });
 
   // Generate time slots every 90 minutes (matching backend)
@@ -54,6 +55,21 @@ const CreateReservationModal = ({ courts, onClose, onSuccess }) => {
       checkAvailability();
     }
   }, [formData.date, formData.courtId]);
+
+  useEffect(() => {
+    if (formData.date && formData.startTime) {
+      fetchCourtAssignments();
+    }
+  }, [formData.date, formData.startTime]);
+
+  const fetchCourtAssignments = async () => {
+    try {
+      const response = await reservationService.getCourtAssignments(formData.date, formData.startTime);
+      setCourtAssignments(response);
+    } catch (error) {
+      console.error('Error fetching court assignments:', error);
+    }
+  };
 
   const checkAvailability = async () => {
     setCheckingAvailability(true);
@@ -110,12 +126,8 @@ const CreateReservationModal = ({ courts, onClose, onSuccess }) => {
       setError('Format d\'email invalide');
       return false;
     }
-    if (!formData.numberOfPlayers || ![2, 4].includes(formData.numberOfPlayers)) {
-      setError('Le nombre de joueurs doit être 2 ou 4');
-      return false;
-    }
-    if (!formData.stadiumType || !['indoor', 'outdoor'].includes(formData.stadiumType)) {
-      setError('Le type de terrain est requis');
+    if (!formData.numberOfPlayers || formData.numberOfPlayers < 1) {
+      setError('Le nombre de joueurs doit être au moins 1');
       return false;
     }
     if (!formData.startTime) {
@@ -134,18 +146,21 @@ const CreateReservationModal = ({ courts, onClose, onSuccess }) => {
     setError('');
 
     try {
+      // Get the selected court to find its stadium type
+      const selectedCourt = courts.find(c => c.Id === parseInt(formData.courtId));
+      
       const reservationData = {
         PlayerFullName: formData.playerFullName,
         PlayerPhone: formData.playerPhone,
         NumberOfPlayers: formData.numberOfPlayers,
-        StadiumType: formData.stadiumType,
+        StadiumType: selectedCourt?.StadiumType || 'outdoor',
         CourtId: parseInt(formData.courtId),
         Date: formData.date,
         StartTime: formData.startTime,
         EndTime: getEndTime(formData.startTime),
         Price: formData.price,
-        Status: 2, // Confirmée
-        IsPaid: false,
+        Status: formData.isPaid ? 2 : 1, // Payé ou En attente
+        IsPaid: formData.isPaid,
         CreatedBy: 'Admin'
       };
 
@@ -237,31 +252,14 @@ const CreateReservationModal = ({ courts, onClose, onSuccess }) => {
                     <Users size={16} />
                     Nombre de joueurs *
                   </label>
-                  <select
+                  <input
+                    type="number"
                     className="form-input"
+                    min="1"
                     value={formData.numberOfPlayers}
-                    onChange={(e) => handleInputChange('numberOfPlayers', parseInt(e.target.value))}
+                    onChange={(e) => handleInputChange('numberOfPlayers', parseInt(e.target.value) || 1)}
                     required
-                  >
-                    <option value={2}>2 joueurs</option>
-                    <option value={4}>4 joueurs</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">
-                    <MapPin size={16} />
-                    Type de terrain *
-                  </label>
-                  <select
-                    className="form-input"
-                    value={formData.stadiumType}
-                    onChange={(e) => handleInputChange('stadiumType', e.target.value)}
-                    required
-                  >
-                    <option value="outdoor">Extérieur</option>
-                    <option value="indoor">Intérieur</option>
-                  </select>
+                  />
                 </div>
               </div>
 
@@ -280,14 +278,22 @@ const CreateReservationModal = ({ courts, onClose, onSuccess }) => {
                     onChange={(e) => handleInputChange('courtId', e.target.value)}
                     required
                   >
-                    {activeCourts.map(court => (
-                      <option key={court.Id} value={court.Id}>
-                        {court.Name}
-                      </option>
-                    ))}
+                    {activeCourts.map(court => {
+                      const isOccupied = courtAssignments?.indoor?.occupied?.some(o => o.courtId === court.Id) ||
+                                       courtAssignments?.outdoor?.occupied?.some(o => o.courtId === court.Id);
+                      const occupiedBy = courtAssignments?.indoor?.occupied?.find(o => o.courtId === court.Id)?.playerName ||
+                                       courtAssignments?.outdoor?.occupied?.find(o => o.courtId === court.Id)?.playerName;
+                      
+                      return (
+                        <option key={court.Id} value={court.Id} disabled={isOccupied}>
+                          {court.Name} ({court.StadiumType === 'indoor' ? 'Intérieur' : 'Extérieur'}) - {court.SportType || 'Padel'}
+                          {isOccupied ? ` (Occupé par ${occupiedBy})` : ''}
+                        </option>
+                      );
+                    })}
                     {courts.filter(court => !court.IsActive).map(court => (
                       <option key={court.Id} value={court.Id}>
-                        {court.Name} (Inactif)
+                        {court.Name} ({court.StadiumType === 'indoor' ? 'Intérieur' : 'Extérieur'}) - {court.SportType || 'Padel'} (Inactif)
                       </option>
                     ))}
                   </select>
@@ -353,6 +359,39 @@ const CreateReservationModal = ({ courts, onClose, onSuccess }) => {
                   />
                 </div>
 
+                <div className="form-group">
+                  <label className="form-label">
+                    <CreditCard size={16} />
+                    Statut de paiement
+                  </label>
+                  <div className="payment-status-options">
+                    <label className="radio-option">
+                      <input
+                        type="radio"
+                        name="paymentStatus"
+                        checked={!formData.isPaid}
+                        onChange={() => handleInputChange('isPaid', false)}
+                      />
+                      <span className="radio-label">
+                        <span className="status-indicator pending"></span>
+                        En attente
+                      </span>
+                    </label>
+                    <label className="radio-option">
+                      <input
+                        type="radio"
+                        name="paymentStatus"
+                        checked={formData.isPaid}
+                        onChange={() => handleInputChange('isPaid', true)}
+                      />
+                      <span className="radio-label">
+                        <span className="status-indicator paid"></span>
+                        Payé
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
                 {formData.startTime && (
                   <div className="reservation-summary">
                     <div className="summary-item">
@@ -360,8 +399,8 @@ const CreateReservationModal = ({ courts, onClose, onSuccess }) => {
                       <strong>{formData.numberOfPlayers} joueurs</strong>
                     </div>
                     <div className="summary-item">
-                      <span>Type:</span>
-                      <strong>{formData.stadiumType === 'indoor' ? 'Intérieur' : 'Extérieur'}</strong>
+                      <span>Terrain:</span>
+                      <strong>{courts.find(c => c.Id === parseInt(formData.courtId))?.Name || ''}</strong>
                     </div>
                     <div className="summary-item">
                       <span>Durée:</span>
@@ -375,6 +414,30 @@ const CreateReservationModal = ({ courts, onClose, onSuccess }) => {
                       <span>Total:</span>
                       <strong className="text-green-600">{formData.price} DT</strong>
                     </div>
+                    
+                    {courtAssignments && (
+                      <div className="court-status-summary">
+                        <h5>Status des terrains à {formData.startTime}:</h5>
+                        <div className="status-grid">
+                          <div className="status-section">
+                            <span className="status-title">Intérieur ({courtAssignments.indoor.available.length}/{courtAssignments.indoor.total}):</span>
+                            {courtAssignments.indoor.available.length > 0 ? (
+                              <span className="text-green-600">Disponible</span>
+                            ) : (
+                              <span className="text-red-600">Complet</span>
+                            )}
+                          </div>
+                          <div className="status-section">
+                            <span className="status-title">Extérieur ({courtAssignments.outdoor.available.length}/{courtAssignments.outdoor.total}):</span>
+                            {courtAssignments.outdoor.available.length > 0 ? (
+                              <span className="text-green-600">Disponible</span>
+                            ) : (
+                              <span className="text-red-600">Complet</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

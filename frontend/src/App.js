@@ -41,10 +41,32 @@ function App() {
     message: "",
     severity: "success",
   });
+  const [companyInfo, setCompanyInfo] = useState({
+    name: "Réservation Padel",
+    phone: "+216 XX XXX XXX",
+    address: "",
+    hasLogo: false
+  });
 
   useEffect(() => {
     document.dir = currentLanguage === "ar" ? "rtl" : "ltr";
   }, [currentLanguage]);
+
+  useEffect(() => {
+    // Fetch company information
+    const fetchCompanyInfo = async () => {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/company/public`);
+        if (response.ok) {
+          const data = await response.json();
+          setCompanyInfo(data);
+        }
+      } catch (error) {
+        console.error('Error fetching company info:', error);
+      }
+    };
+    fetchCompanyInfo();
+  }, []);
 
   const handleTimeSlotSelect = (date, time) => {
     setSelectedDate(date);
@@ -69,9 +91,9 @@ function App() {
 
   const handleWhatsAppClick = () => {
     // Remove all special characters from phone number
-    const phoneNumber = "15551652477"; // +1 (555) 165-2477 without special characters
+    const phoneNumber = companyInfo.phone.replace(/[^0-9]/g, '');
     const message = encodeURIComponent(
-      "Bonjour, j'aimerais avoir plus d'informations sur la réservation de terrain de padel."
+      "Bonjour, j'aimerais avoir plus d'informations sur la réservation de terrain."
     );
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
     window.open(whatsappUrl, "_blank");
@@ -123,7 +145,7 @@ function App() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Calendar className="h-8 w-8" />
-              <h1 className="text-xl font-bold">{t.title}</h1>
+              <h1 className="text-xl font-bold">{companyInfo.name}</h1>
             </div>
 
             <select
@@ -215,7 +237,7 @@ function App() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center text-sm">
           <div className="flex items-center justify-center space-x-2">
             <Phone className="h-4 w-4 text-blue-400" />
-            <span>+216 XX XXX XXX</span>
+            <span>{companyInfo.phone}</span>
           </div>
           <div className="flex items-center justify-center space-x-2">
             <Clock className="h-4 w-4 text-blue-400" />

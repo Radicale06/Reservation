@@ -70,4 +70,36 @@ export class ReservationsController {
   updateCourt(@Param('id') id: string, @Body('courtId') courtId: number) {
     return this.reservationsService.updateCourtAssignment(+id, courtId);
   }
+
+  @Get('stadium-availability')
+  getStadiumAvailability(
+    @Query('date') date: string,
+    @Query('time') time: string
+  ) {
+    return this.reservationsService.getAvailableStadiumTypes(date, time);
+  }
+
+  @Get('court-assignments')
+  getCourtAssignments(
+    @Query('date') date: string,
+    @Query('time') time: string
+  ) {
+    return this.reservationsService.getCourtAssignments(date, time);
+  }
+
+  @Get('debug-availability')
+  async debugAvailability(
+    @Query('date') date: string,
+    @Query('time') time: string
+  ) {
+    console.log('Debug availability for:', { date, time });
+    const result = await this.reservationsService.getAvailableStadiumTypes(date, time);
+    console.log('Result:', result);
+    return result;
+  }
+
+  @Put(':id/toggle-payment')
+  togglePaymentStatus(@Param('id') id: string) {
+    return this.reservationsService.togglePaymentStatus(+id);
+  }
 }

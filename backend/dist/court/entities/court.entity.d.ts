@@ -4,6 +4,7 @@ export declare class Court {
     Description: string;
     Type: string;
     StadiumType: string;
+    SportType: string;
     Image: Buffer;
     IsActive: boolean;
     CreatedAt: Date;

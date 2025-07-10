@@ -15,4 +15,29 @@ export declare class ReservationsController {
     getDailyStats(date: string): Promise<any>;
     getMonthlyStats(year: string, month: string): Promise<any>;
     updateCourt(id: string, courtId: number): Promise<import("./entities/reservation.entity").Reservation>;
+    getStadiumAvailability(date: string, time: string): Promise<{
+        indoor: {
+            available: boolean;
+            courts: number;
+            availableCourts: any[];
+        };
+        outdoor: {
+            available: boolean;
+            courts: number;
+            availableCourts: any[];
+        };
+    }>;
+    getCourtAssignments(date: string, time: string): Promise<any>;
+    debugAvailability(date: string, time: string): Promise<{
+        indoor: {
+            available: boolean;
+            courts: number;
+            availableCourts: any[];
+        };
+        outdoor: {
+            available: boolean;
+            courts: number;
+            availableCourts: any[];
+        };
+    }>;
 }

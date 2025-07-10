@@ -28,9 +28,23 @@ let CourtService = class CourtService {
         });
     }
     async findActive() {
-        return this.courtRepository.find({
+        const courts = await this.courtRepository.find({
             where: { IsActive: true },
             order: { Name: 'ASC' },
+        });
+        return courts.map(court => {
+            if (!court.StadiumType) {
+                if (court.Type && court.Type.toLowerCase().includes('indoor')) {
+                    court.StadiumType = 'indoor';
+                }
+                else {
+                    court.StadiumType = 'outdoor';
+                }
+            }
+            if (!court.SportType) {
+                court.SportType = 'padel';
+            }
+            return court;
         });
     }
     async findOne(id) {

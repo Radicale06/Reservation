@@ -33,6 +33,16 @@ export const reservationService = {
     const response = await api.get(`/reservations/${id}`);
     return response.data;
   },
+
+  checkStadiumAvailability: async (date, time) => {
+    const response = await api.get(`/reservations/stadium-availability?date=${date}&time=${time}`);
+    return response.data;
+  },
+
+  getCourtAssignments: async (date, time) => {
+    const response = await api.get(`/reservations/court-assignments?date=${date}&time=${time}`);
+    return response.data;
+  },
 };
 
 export default api;

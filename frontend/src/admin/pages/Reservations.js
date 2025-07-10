@@ -61,9 +61,7 @@ const Reservations = () => {
   const getStatusInfo = (status) => {
     const statusMap = {
       1: { label: 'En attente', class: 'status-pending', icon: <Clock size={16} /> },
-      2: { label: 'Confirmée', class: 'status-confirmed', icon: <CheckCircle size={16} /> },
-      3: { label: 'Annulée', class: 'status-cancelled', icon: <XCircle size={16} /> },
-      4: { label: 'Payée', class: 'status-paid', icon: <CheckCircle size={16} /> }
+      2: { label: 'Payé', class: 'status-paid', icon: <CheckCircle size={16} /> }
     };
     return statusMap[status] || { label: 'Inconnu', class: 'status-pending', icon: <AlertCircle size={16} /> };
   };
@@ -80,16 +78,13 @@ const Reservations = () => {
     }
   };
 
-  const handleConfirmPayment = async (id) => {
-    const paymentId = prompt('Entrez l\'ID de paiement :');
-    if (paymentId) {
-      try {
-        await reservations.confirmPayment(id, paymentId);
-        loadData();
-      } catch (error) {
-        console.error('Error confirming payment:', error);
-        alert('Erreur lors de la confirmation du paiement');
-      }
+  const handleTogglePayment = async (id) => {
+    try {
+      await reservations.togglePayment(id);
+      loadData();
+    } catch (error) {
+      console.error('Error toggling payment:', error);
+      alert('Erreur lors de la modification du statut de paiement');
     }
   };
 
@@ -187,9 +182,7 @@ const Reservations = () => {
             >
               <option value="all">Tous les statuts</option>
               <option value="1">En attente</option>
-              <option value="2">Confirmée</option>
-              <option value="3">Annulée</option>
-              <option value="4">Payée</option>
+              <option value="2">Payé</option>
             </select>
 
             <input
@@ -314,25 +307,21 @@ const Reservations = () => {
                           <Eye size={16} />
                         </button>
                         
-                        {reservation.Status === 1 && (
-                          <button 
-                            className="btn-icon btn-success"
-                            title="Confirmer paiement"
-                            onClick={() => handleConfirmPayment(reservation.Id)}
-                          >
-                            <CheckCircle size={16} />
-                          </button>
-                        )}
+                        <button 
+                          className={`btn-icon ${reservation.Status === 1 ? 'btn-success' : 'btn-warning'}`}
+                          title={reservation.Status === 1 ? 'Marquer comme payé' : 'Marquer en attente'}
+                          onClick={() => handleTogglePayment(reservation.Id)}
+                        >
+                          {reservation.Status === 1 ? <CheckCircle size={16} /> : <Clock size={16} />}
+                        </button>
                         
-                        {reservation.Status !== 3 && reservation.Status !== 4 && (
-                          <button 
-                            className="btn-icon btn-danger"
-                            title="Annuler"
-                            onClick={() => handleCancelReservation(reservation.Id)}
-                          >
-                            <XCircle size={16} />
-                          </button>
-                        )}
+                        <button 
+                          className="btn-icon btn-danger"
+                          title="Supprimer"
+                          onClick={() => handleCancelReservation(reservation.Id)}
+                        >
+                          <XCircle size={16} />
+                        </button>
                       </div>
                     </td>
                   </tr>

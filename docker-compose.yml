@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: reservation_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword123
+      MYSQL_DATABASE: reservation_db
+      MYSQL_USER: reservation_user
+      MYSQL_PASSWORD: password123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+      - ./docker/mysql/conf:/etc/mysql/conf.d
+    networks:
+      - reservation_network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: reservation_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: reservation_user
+      PMA_PASSWORD: password123
+      MYSQL_ROOT_PASSWORD: rootpassword123
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+    networks:
+      - reservation_network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  reservation_network:
+    driver: bridge

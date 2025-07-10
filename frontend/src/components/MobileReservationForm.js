@@ -1,5 +1,5 @@
 // src/components/MobileReservationForm.js
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   User,
   Mail,
@@ -44,7 +44,69 @@ const MobileReservationForm = ({
     cvv: "",
   });
 
+  const [stadiumAvailability, setStadiumAvailability] = useState({
+    indoor: { available: true, courts: 0 },
+    outdoor: { available: true, courts: 0 }
+  });
+  const [checkingStadiums, setCheckingStadiums] = useState(false);
+
   const [errors, setErrors] = useState({});
+
+  // Check stadium availability when date and time are available
+  useEffect(() => {
+    if (selectedDate && selectedTime) {
+      checkStadiumAvailability();
+    }
+  }, [selectedDate, selectedTime]);
+
+  const checkStadiumAvailability = async () => {
+    setCheckingStadiums(true);
+    try {
+      const response = await reservationService.checkStadiumAvailability(selectedDate, selectedTime);
+      
+      // Ensure response has correct structure
+      const safeResponse = {
+        indoor: {
+          available: response?.indoor?.available || false,
+          courts: response?.indoor?.courts || 0,
+          availableCourts: response?.indoor?.availableCourts || []
+        },
+        outdoor: {
+          available: response?.outdoor?.available || false,
+          courts: response?.outdoor?.courts || 0,
+          availableCourts: response?.outdoor?.availableCourts || []
+        }
+      };
+      
+      // If no courts are found, default to making both available
+      if (safeResponse.indoor.courts === 0 && safeResponse.outdoor.courts === 0) {
+        safeResponse.indoor.available = true;
+        safeResponse.outdoor.available = true;
+        safeResponse.indoor.courts = 3; // Default assumption
+        safeResponse.outdoor.courts = 3; // Default assumption
+      }
+      
+      setStadiumAvailability(safeResponse);
+      
+      // Auto-select available stadium type if current selection is not available
+      if (!safeResponse[formData.stadiumType].available) {
+        if (safeResponse.indoor.available) {
+          setFormData(prev => ({ ...prev, stadiumType: 'indoor' }));
+        } else if (safeResponse.outdoor.available) {
+          setFormData(prev => ({ ...prev, stadiumType: 'outdoor' }));
+        }
+      }
+    } catch (error) {
+      console.error('Error checking stadium availability:', error);
+      // Set default availability if API fails - assume courts are available
+      setStadiumAvailability({
+        indoor: { available: true, courts: 3, availableCourts: [] },
+        outdoor: { available: true, courts: 3, availableCourts: [] }
+      });
+    } finally {
+      setCheckingStadiums(false);
+    }
+  };
 
   const steps = [
     { label: "Informations", icon: User },
@@ -156,6 +218,12 @@ const MobileReservationForm = ({
 
   const handleNext = async () => {
     if (!validateForm(activeStep)) return;
+    
+    // Check if selected stadium type is available
+    if (!stadiumAvailability[formData.stadiumType].available) {
+      setError('Le type de terrain sélectionné n’est plus disponible. Veuillez en choisir un autre.');
+      return;
+    }
 
     if (activeStep === 0) {
       setLoading(true);
@@ -472,14 +540,14 @@ const MobileReservationForm = ({
                 </label>
                 <div className="relative">
                   <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <select
+                  <input
+                    type="number"
+                    min="1"
                     value={formData.numberOfPlayers}
-                    onChange={(e) => handleInputChange("numberOfPlayers", parseInt(e.target.value))}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors appearance-none bg-white"
-                  >
-                    <option value={2}>2 joueurs</option>
-                    <option value={4}>4 joueurs</option>
-                  </select>
+                    onChange={(e) => handleInputChange("numberOfPlayers", parseInt(e.target.value) || 1)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    placeholder="Nombre de joueurs"
+                  />
                 </div>
               </div>
 
@@ -487,44 +555,80 @@ const MobileReservationForm = ({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Type de terrain *
                 </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => handleInputChange("stadiumType", "indoor")}
-                    className={`p-4 border-2 rounded-xl transition-all duration-200 flex flex-col items-center justify-center space-y-2 ${
-                      formData.stadiumType === "indoor"
-                        ? "border-blue-500 bg-blue-50 text-blue-700"
-                        : "border-gray-200 hover:border-blue-300"
-                    }`}
-                  >
-                    <Home className="h-6 w-6" />
-                    <span className="font-medium">Intérieur</span>
-                    <span className="text-xs opacity-75">Terrain couvert</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleInputChange("stadiumType", "outdoor")}
-                    className={`p-4 border-2 rounded-xl transition-all duration-200 flex flex-col items-center justify-center space-y-2 ${
-                      formData.stadiumType === "outdoor"
-                        ? "border-blue-500 bg-blue-50 text-blue-700"
-                        : "border-gray-200 hover:border-blue-300"
-                    }`}
-                  >
-                    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="5" />
-                      <line x1="12" y1="1" x2="12" y2="3" />
-                      <line x1="12" y1="21" x2="12" y2="23" />
-                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                      <line x1="1" y1="12" x2="3" y2="12" />
-                      <line x1="21" y1="12" x2="23" y2="12" />
-                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                    </svg>
-                    <span className="font-medium">Extérieur</span>
-                    <span className="text-xs opacity-75">Terrain découvert</span>
-                  </button>
-                </div>
+                {checkingStadiums ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-4 border-2 border-gray-200 rounded-xl flex flex-col items-center justify-center space-y-2 opacity-50">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <span className="text-xs">Vérification...</span>
+                    </div>
+                    <div className="p-4 border-2 border-gray-200 rounded-xl flex flex-col items-center justify-center space-y-2 opacity-50">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <span className="text-xs">Vérification...</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => stadiumAvailability.indoor.available && handleInputChange("stadiumType", "indoor")}
+                      disabled={!stadiumAvailability.indoor.available}
+                      className={`p-4 border-2 rounded-xl transition-all duration-200 flex flex-col items-center justify-center space-y-2 ${
+                        !stadiumAvailability.indoor.available
+                          ? "border-red-300 bg-red-50 text-red-400 cursor-not-allowed"
+                          : formData.stadiumType === "indoor"
+                          ? "border-blue-500 bg-blue-50 text-blue-700"
+                          : "border-gray-200 hover:border-blue-300"
+                      }`}
+                    >
+                      <Home className="h-6 w-6" />
+                      <span className="font-medium">Intérieur</span>
+                      <span className="text-xs opacity-75">
+                        {stadiumAvailability.indoor.available
+                          ? `${stadiumAvailability.indoor.availableCourts?.length || 0} disponible(s)`
+                          : "Complet"}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => stadiumAvailability.outdoor.available && handleInputChange("stadiumType", "outdoor")}
+                      disabled={!stadiumAvailability.outdoor.available}
+                      className={`p-4 border-2 rounded-xl transition-all duration-200 flex flex-col items-center justify-center space-y-2 ${
+                        !stadiumAvailability.outdoor.available
+                          ? "border-red-300 bg-red-50 text-red-400 cursor-not-allowed"
+                          : formData.stadiumType === "outdoor"
+                          ? "border-blue-500 bg-blue-50 text-blue-700"
+                          : "border-gray-200 hover:border-blue-300"
+                      }`}
+                    >
+                      <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="5" />
+                        <line x1="12" y1="1" x2="12" y2="3" />
+                        <line x1="12" y1="21" x2="12" y2="23" />
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                        <line x1="1" y1="12" x2="3" y2="12" />
+                        <line x1="21" y1="12" x2="23" y2="12" />
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                      </svg>
+                      <span className="font-medium">Extérieur</span>
+                      <span className="text-xs opacity-75">
+                        {stadiumAvailability.outdoor.available
+                          ? `${stadiumAvailability.outdoor.availableCourts?.length || 0} disponible(s)`
+                          : "Complet"}
+                      </span>
+                    </button>
+                  </div>
+                )}
+                
+                {!stadiumAvailability.indoor.available && !stadiumAvailability.outdoor.available && !checkingStadiums && (
+                  <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center space-x-2">
+                    <AlertCircle className="h-5 w-5 text-red-500" />
+                    <span className="text-red-700 text-sm">
+                      Aucun terrain disponible pour ce créneau. Veuillez choisir un autre horaire.
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           )}

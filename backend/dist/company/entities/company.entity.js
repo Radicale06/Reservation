@@ -14,6 +14,7 @@ const typeorm_1 = require("typeorm");
 let Company = class Company {
     Id;
     Company;
+    RaisonSociale;
     TaxIdentificationNumber;
     Address;
     Phone;
@@ -28,6 +29,10 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255 }),
     __metadata("design:type", String)
 ], Company.prototype, "Company", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
+    __metadata("design:type", String)
+], Company.prototype, "RaisonSociale", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255 }),
     __metadata("design:type", String)

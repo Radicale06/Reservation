@@ -65,6 +65,7 @@ export const reservations = {
   create: (data) => api.post('/reservations', data),
   cancel: (id) => api.post(`/reservations/${id}/cancel`),
   confirmPayment: (id, paymentId) => api.post(`/reservations/${id}/confirm-payment`, { paymentId }),
+  togglePayment: (id) => api.put(`/reservations/${id}/toggle-payment`),
   updateCourt: (id, courtId) => api.put(`/reservations/${id}/court`, { courtId }),
   getDailyStats: (date) => api.get('/reservations/stats/daily', { params: { date } }),
   getMonthlyStats: (year, month) => api.get('/reservations/stats/monthly', { params: { year, month } }),
@@ -86,9 +87,21 @@ export const payment = {
   verifyPayment: (gateway, paymentId) => api.get(`/payment/verify/${gateway}/${paymentId}`),
 };
 
+// Company
+export const company = {
+  get: () => api.get('/company'),
+  update: (data) => api.put('/company', data),
+  uploadLogo: (formData) => api.post('/company/logo', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  }),
+};
+
 export default {
   auth,
   reservations,
   courts,
   payment,
+  company,
 };
