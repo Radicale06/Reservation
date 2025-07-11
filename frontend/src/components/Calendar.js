@@ -10,8 +10,10 @@ import {
   Loader2,
 } from "lucide-react";
 import { reservationService } from "../services/api";
+import { useTranslation } from "react-i18next";
 
 const MobileCalendar = ({ onTimeSlotSelect }) => {
+  const { t } = useTranslation();
   const [selectedDate, setSelectedDate] = useState(null);
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [availableSlots, setAvailableSlots] = useState([]);
@@ -51,7 +53,7 @@ const MobileCalendar = ({ onTimeSlotSelect }) => {
       setAvailableSlots(slots);
     } catch (error) {
       console.error("Error loading slots:", error);
-      setError("Erreur lors du chargement des créneaux");
+      setError(t('calendar.loadingError'));
       setAvailableSlots([]);
     } finally {
       setLoading(false);
@@ -86,8 +88,8 @@ const MobileCalendar = ({ onTimeSlotSelect }) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
 
-    if (date.toDateString() === today.toDateString()) return "Aujourd'hui";
-    if (date.toDateString() === tomorrow.toDateString()) return "Demain";
+    if (date.toDateString() === today.toDateString()) return t('calendar.today');
+    if (date.toDateString() === tomorrow.toDateString()) return t('calendar.tomorrow');
     return date.toLocaleDateString("fr-FR", { weekday: "short" });
   };
 
@@ -107,7 +109,7 @@ const MobileCalendar = ({ onTimeSlotSelect }) => {
           <div className="flex items-center space-x-2">
             <Calendar className="h-7 w-7 text-blue-600" />
             <h2 className="text-xl font-bold text-gray-900">
-              Choisir une date
+              {t('calendar.selectDateTitle')}
             </h2>
           </div>
           <button
@@ -115,7 +117,7 @@ const MobileCalendar = ({ onTimeSlotSelect }) => {
             className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium flex items-center space-x-1 hover:bg-blue-200 transition-colors"
           >
             <CalendarDays className="h-4 w-4" />
-            <span>Cette semaine</span>
+            <span>{t('calendar.thisWeek')}</span>
           </button>
         </div>
 
@@ -188,7 +190,7 @@ const MobileCalendar = ({ onTimeSlotSelect }) => {
           <div className="animate-fadeIn">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-lg font-bold text-gray-900">
-                Créneaux disponibles
+                {t('calendar.availableSlots')}
               </h3>
               <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
                 {selectedDate.toLocaleDateString("fr-FR", {
@@ -209,7 +211,7 @@ const MobileCalendar = ({ onTimeSlotSelect }) => {
                   }
                   className="ml-auto text-red-600 hover:text-red-800 text-sm font-medium"
                 >
-                  Réessayer
+                  {t('calendar.retry')}
                 </button>
               </div>
             )}
@@ -218,7 +220,7 @@ const MobileCalendar = ({ onTimeSlotSelect }) => {
               <div className="text-center py-8">
                 <Loader2 className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-2" />
                 <p className="text-gray-600 text-sm">
-                  Chargement des créneaux...
+                  {t('calendar.loading')}
                 </p>
               </div>
             ) : availableSlots.length > 0 ? (
@@ -253,7 +255,7 @@ const MobileCalendar = ({ onTimeSlotSelect }) => {
                             : slot.time || slot.startTime
                         )}
                       </div>
-                      <div className="text-xs opacity-75 mb-2">90 min</div>
+                      <div className="text-xs opacity-75 mb-2">90 {t('calendar.minutes')}</div>
                       <div className="inline-flex items-center space-x-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium group-hover:bg-white group-hover:bg-opacity-20">
                         <span>
                           {typeof slot === "object" && slot.price
@@ -269,10 +271,10 @@ const MobileCalendar = ({ onTimeSlotSelect }) => {
               <div className="text-center py-8 bg-gray-50 rounded-xl">
                 <CalendarDays className="h-12 w-12 text-gray-400 mx-auto mb-2" />
                 <p className="text-gray-600 font-medium mb-1">
-                  Aucun créneau disponible
+                  {t('calendar.noSlots')}
                 </p>
                 <p className="text-gray-500 text-sm">
-                  Choisissez une autre date
+                  {t('calendar.chooseOtherDate')}
                 </p>
               </div>
             )}
@@ -284,10 +286,10 @@ const MobileCalendar = ({ onTimeSlotSelect }) => {
           <div className="text-center py-8 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
             <Calendar className="h-16 w-16 text-blue-400 mx-auto mb-3" />
             <h3 className="text-lg font-semibold text-gray-700 mb-1">
-              Sélectionnez une date
+              {t('calendar.selectDate')}
             </h3>
             <p className="text-gray-500 text-sm">
-              Touchez un jour dans le calendrier ci-dessus
+              {t('calendar.touchCalendar')}
             </p>
           </div>
         )}

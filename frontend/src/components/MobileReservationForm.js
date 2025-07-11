@@ -17,6 +17,7 @@ import {
   Home,
 } from "lucide-react";
 import { reservationService } from "../services/api";
+import { useTranslation } from "react-i18next";
 
 const MobileReservationForm = ({
   selectedDate,
@@ -24,6 +25,7 @@ const MobileReservationForm = ({
   onComplete,
   onCancel,
 }) => {
+  const { t } = useTranslation();
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -110,8 +112,8 @@ const MobileReservationForm = ({
   };
 
   const steps = [
-    { label: "Informations", icon: User },
-    { label: "Paiement", icon: CreditCard },
+    { label: t('form.personalInfo'), icon: User },
+    { label: t('payment.title'), icon: CreditCard },
   ];
 
   const paymentMethods = [
@@ -144,16 +146,16 @@ const MobileReservationForm = ({
     const newErrors = {};
 
     if (step === 0) {
-      if (!formData.firstName.trim()) newErrors.firstName = "Requis";
-      if (!formData.lastName.trim()) newErrors.lastName = "Requis";
+      if (!formData.firstName.trim()) newErrors.firstName = t('form.firstNameRequired');
+      if (!formData.lastName.trim()) newErrors.lastName = t('form.lastNameRequired');
       // Email is optional
       if (formData.email.trim() && !/\S+@\S+\.\S+/.test(formData.email)) {
-        newErrors.email = "Email invalide";
+        newErrors.email = t('form.invalidEmail');
       }
       if (!formData.phoneNumber.trim()) {
-        newErrors.phoneNumber = "Requis";
+        newErrors.phoneNumber = t('form.phoneRequired');
       } else if (!/^[0-9]{8,}$/.test(formData.phoneNumber)) {
-        newErrors.phoneNumber = "Numéro invalide";
+        newErrors.phoneNumber = t('form.invalidPhone');
       }
     }
 
@@ -254,7 +256,7 @@ const MobileReservationForm = ({
         setReservationId(reservation.Id || reservation.id);
         setActiveStep(1);
       } catch (error) {
-        setError("Erreur lors de la création de la réservation");
+        setError(t('form.reservationError'));
       } finally {
         setLoading(false);
       }
@@ -302,11 +304,11 @@ const MobileReservationForm = ({
         setTimeout(() => {
           onComplete({
             paymentMethod: "card",
-            message: "Paiement effectué avec succès!",
+            message: t('payment.paymentSuccess'),
           });
         }, 1000);
       } else {
-        setError("Erreur lors du paiement");
+        setError(t('payment.paymentError'));
       }
     } catch (error) {
       setError("Erreur lors du paiement");
@@ -377,12 +379,12 @@ const MobileReservationForm = ({
         <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border border-blue-200">
           <div className="flex items-center space-x-2 mb-3">
             <Calendar className="h-5 w-5 text-blue-600" />
-            <h3 className="font-semibold text-gray-900">Votre réservation</h3>
+            <h3 className="font-semibold text-gray-900">{t('form.yourReservation')}</h3>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-white p-2 rounded-lg text-center">
-              <div className="text-xs text-gray-500 mb-1">Date</div>
+              <div className="text-xs text-gray-500 mb-1">{t('form.date')}</div>
               <div className="font-bold text-sm">
                 {selectedDate
                   ? new Date(selectedDate).toLocaleDateString("fr-FR", {
@@ -394,19 +396,19 @@ const MobileReservationForm = ({
             </div>
 
             <div className="bg-white p-2 rounded-lg text-center">
-              <div className="text-xs text-gray-500 mb-1">Horaire</div>
+              <div className="text-xs text-gray-500 mb-1">{t('form.time')}</div>
               <div className="font-bold text-sm">
                 {selectedTime || "-"} - {getEndTime(selectedTime)}
               </div>
             </div>
 
             <div className="bg-white p-2 rounded-lg text-center">
-              <div className="text-xs text-gray-500 mb-1">Durée</div>
-              <div className="font-bold text-sm">90 min</div>
+              <div className="text-xs text-gray-500 mb-1">{t('form.duration')}</div>
+              <div className="font-bold text-sm">90 {t('calendar.minutes')}</div>
             </div>
 
             <div className="bg-white p-2 rounded-lg text-center">
-              <div className="text-xs text-gray-500 mb-1">Prix</div>
+              <div className="text-xs text-gray-500 mb-1">{t('form.price')}</div>
               <div className="font-bold text-sm text-green-600">60 DT</div>
             </div>
           </div>
@@ -432,7 +434,7 @@ const MobileReservationForm = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Prénom *
+                    {t('form.firstName')} *
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -447,7 +449,7 @@ const MobileReservationForm = ({
                           ? "border-red-300 bg-red-50"
                           : "border-gray-300"
                       }`}
-                      placeholder="Votre prénom"
+                      placeholder={t('form.firstNamePlaceholder')}
                     />
                   </div>
                   {errors.firstName && (
@@ -459,7 +461,7 @@ const MobileReservationForm = ({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nom *
+                    {t('form.lastName')} *
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -474,7 +476,7 @@ const MobileReservationForm = ({
                           ? "border-red-300 bg-red-50"
                           : "border-gray-300"
                       }`}
-                      placeholder="Votre nom"
+                      placeholder={t('form.lastNamePlaceholder')}
                     />
                   </div>
                   {errors.lastName && (
@@ -487,7 +489,7 @@ const MobileReservationForm = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email (optionnel)
+                  {t('form.email')} (optionnel)
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -500,7 +502,7 @@ const MobileReservationForm = ({
                         ? "border-red-300 bg-red-50"
                         : "border-gray-300"
                     }`}
-                    placeholder="votre@email.com (optionnel)"
+                    placeholder={`${t('form.emailPlaceholder')} (optionnel)`}
                   />
                 </div>
                 {errors.email && (
@@ -510,7 +512,7 @@ const MobileReservationForm = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Téléphone *
+                  {t('form.phone')} *
                 </label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -525,7 +527,7 @@ const MobileReservationForm = ({
                         ? "border-red-300 bg-red-50"
                         : "border-gray-300"
                     }`}
-                    placeholder="12345678"
+                    placeholder={t('form.phonePlaceholder')}
                   />
                 </div>
                 {errors.phoneNumber && (
@@ -537,7 +539,7 @@ const MobileReservationForm = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nombre de joueurs *
+                  {t('form.numberOfPlayers')} *
                 </label>
                 <div className="relative">
                   <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -547,24 +549,24 @@ const MobileReservationForm = ({
                     value={formData.numberOfPlayers}
                     onChange={(e) => handleInputChange("numberOfPlayers", parseInt(e.target.value) || 1)}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                    placeholder="Nombre de joueurs"
+                    placeholder={t('form.numberOfPlayersPlaceholder')}
                   />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Type de terrain *
+                  {t('form.stadiumType')} *
                 </label>
                 {checkingStadiums ? (
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-4 border-2 border-gray-200 rounded-xl flex flex-col items-center justify-center space-y-2 opacity-50">
                       <Loader2 className="h-6 w-6 animate-spin" />
-                      <span className="text-xs">Vérification...</span>
+                      <span className="text-xs">{t('form.checking')}</span>
                     </div>
                     <div className="p-4 border-2 border-gray-200 rounded-xl flex flex-col items-center justify-center space-y-2 opacity-50">
                       <Loader2 className="h-6 w-6 animate-spin" />
-                      <span className="text-xs">Vérification...</span>
+                      <span className="text-xs">{t('form.checking')}</span>
                     </div>
                   </div>
                 ) : (
@@ -582,11 +584,11 @@ const MobileReservationForm = ({
                       }`}
                     >
                       <Home className="h-6 w-6" />
-                      <span className="font-medium">Intérieur</span>
+                      <span className="font-medium">{t('form.indoor')}</span>
                       <span className="text-xs opacity-75">
                         {stadiumAvailability.indoor.available
-                          ? `${stadiumAvailability.indoor.courts || 0} disponible(s)`
-                          : "Complet"}
+                          ? `${stadiumAvailability.indoor.courts || 0} ${t('form.available')}`
+                          : t('form.unavailable')}
                       </span>
                     </button>
                     <button
@@ -612,11 +614,11 @@ const MobileReservationForm = ({
                         <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
                         <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
                       </svg>
-                      <span className="font-medium">Extérieur</span>
+                      <span className="font-medium">{t('form.outdoor')}</span>
                       <span className="text-xs opacity-75">
                         {stadiumAvailability.outdoor.available
-                          ? `${stadiumAvailability.outdoor.courts || 0} disponible(s)`
-                          : "Complet"}
+                          ? `${stadiumAvailability.outdoor.courts || 0} ${t('form.available')}`
+                          : t('form.unavailable')}
                       </span>
                     </button>
                   </div>
@@ -626,7 +628,7 @@ const MobileReservationForm = ({
                   <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center space-x-2">
                     <AlertCircle className="h-5 w-5 text-red-500" />
                     <span className="text-red-700 text-sm">
-                      Aucun terrain disponible pour ce créneau. Veuillez choisir un autre horaire.
+                      {t('form.noStadiumAvailable')}
                     </span>
                   </div>
                 )}
@@ -638,14 +640,14 @@ const MobileReservationForm = ({
             <div className="space-y-6">
               <div className="text-center p-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Total à payer
+                  {t('payment.total')}
                 </h3>
                 <div className="text-4xl font-bold text-green-600">60 DT</div>
               </div>
 
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Méthode de paiement
+                  {t('payment.paymentMethod')}
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
                   {paymentMethods.map((method) => (
@@ -710,7 +712,7 @@ const MobileReservationForm = ({
             className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 disabled:opacity-50 transition-colors flex items-center justify-center space-x-2 touch-manipulation"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>{activeStep === 0 ? "Annuler" : "Retour"}</span>
+            <span>{activeStep === 0 ? t('form.cancel') : t('form.back')}</span>
           </button>
 
           <button
@@ -731,12 +733,12 @@ const MobileReservationForm = ({
             )}
             <span>
               {loading
-                ? "Traitement..."
+                ? t('payment.processing')
                 : activeStep === 0
-                ? "Continuer"
+                ? t('form.continue')
                 : formData.paymentMethod === "cash"
                 ? "Confirmer la réservation"
-                : "Payer 60 DT"}
+                : t('payment.pay')}
             </span>
           </button>
         </div>

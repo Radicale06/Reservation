@@ -20,8 +20,9 @@ import {
   MessageCircle,
 } from "lucide-react";
 import reservationService from "./services/api";
-import MobileCalendar from "./components/MobileCalendar";
+import MobileCalendar from "./components/Calendar";
 import MobileReservationForm from "./components/MobileReservationForm";
+import { useTranslation } from "react-i18next";
 
 // WhatsApp Icon Component
 const WhatsAppIcon = () => (
@@ -32,7 +33,7 @@ const WhatsAppIcon = () => (
 
 // Main App Component
 function App() {
-  const [currentLanguage, setCurrentLanguage] = useState("fr");
+  const { t, i18n } = useTranslation();
   const [showReservationForm, setShowReservationForm] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
@@ -49,8 +50,8 @@ function App() {
   });
 
   useEffect(() => {
-    document.dir = currentLanguage === "ar" ? "rtl" : "ltr";
-  }, [currentLanguage]);
+    document.dir = i18n.language === "ar" ? "rtl" : "ltr";
+  }, [i18n.language]);
 
   useEffect(() => {
     // Fetch company information
@@ -80,7 +81,7 @@ function App() {
     setSelectedTime("");
     setSnackbar({
       open: true,
-      message: "Réservation confirmée avec succès!",
+      message: t('success.message'),
       severity: "success",
     });
   };
@@ -93,49 +94,12 @@ function App() {
     // Remove all special characters from phone number
     const phoneNumber = companyInfo.phone.replace(/[^0-9]/g, '');
     const message = encodeURIComponent(
-      "Bonjour, j'aimerais avoir plus d'informations sur la réservation de terrain."
+      t('whatsappMessage')
     );
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
     window.open(whatsappUrl, "_blank");
   };
 
-  const translations = {
-    fr: {
-      title: "Réservation Padel",
-      welcome: "Bienvenue",
-      subtitle: "Réservez votre terrain de padel en quelques clics",
-      features: {
-        available: "Disponible 24h/24, 7j/7",
-        duration: "Sessions de 90 minutes",
-        price: "60 DT par session",
-      },
-      whatsapp: "Besoin d'aide?",
-    },
-    en: {
-      title: "Padel Reservation",
-      welcome: "Welcome",
-      subtitle: "Book your padel court in just a few clicks",
-      features: {
-        available: "Available 24/7",
-        duration: "90-minute sessions",
-        price: "60 DT per session",
-      },
-      whatsapp: "Need help?",
-    },
-    ar: {
-      title: "حجز البادل",
-      welcome: "مرحباً",
-      subtitle: "احجز ملعب البادل الخاص بك ببضع نقرات",
-      features: {
-        available: "متاح 24/7",
-        duration: "جلسات 90 دقيقة",
-        price: "60 دينار تونسي للجلسة",
-      },
-      whatsapp: "تحتاج مساعدة؟",
-    },
-  };
-
-  const t = translations[currentLanguage];
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -149,8 +113,8 @@ function App() {
             </div>
 
             <select
-              value={currentLanguage}
-              onChange={(e) => setCurrentLanguage(e.target.value)}
+              value={i18n.language}
+              onChange={(e) => i18n.changeLanguage(e.target.value)}
               className="bg-white bg-opacity-20 text-white border border-white border-opacity-30 rounded-lg px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
             >
               <option value="fr" className="text-gray-900">
@@ -177,25 +141,25 @@ function App() {
                 <div className="text-center mb-6">
                   <Calendar className="h-12 w-12 mx-auto mb-3 opacity-90" />
                   <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                    {t.welcome}
+                    {t('welcome')}
                   </h2>
-                  <p className="text-blue-100 text-lg">{t.subtitle}</p>
+                  <p className="text-blue-100 text-lg">{t('subtitle')}</p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-3 text-center">
                     <Clock className="h-6 w-6 mx-auto mb-2" />
                     <p className="text-sm font-medium">
-                      {t.features.available}
+                      {t('features.available24_7')}
                     </p>
                   </div>
                   <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-3 text-center">
                     <CalendarDays className="h-6 w-6 mx-auto mb-2" />
-                    <p className="text-sm font-medium">{t.features.duration}</p>
+                    <p className="text-sm font-medium">{t('features.duration')}</p>
                   </div>
                   <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-3 text-center">
                     <DollarSign className="h-6 w-6 mx-auto mb-2" />
-                    <p className="text-sm font-medium">{t.features.price}</p>
+                    <p className="text-sm font-medium">{t('features.price')}</p>
                   </div>
                 </div>
               </div>
@@ -218,7 +182,7 @@ function App() {
                 <ArrowLeft className="h-5 w-5 text-gray-600" />
               </button>
               <h2 className="text-xl font-bold text-gray-900">
-                Nouvelle Réservation
+                {t('form.newReservation')}
               </h2>
             </div>
 
@@ -241,11 +205,11 @@ function App() {
           </div>
           <div className="flex items-center justify-center space-x-2">
             <Clock className="h-4 w-4 text-blue-400" />
-            <span>24h/24 - 7j/7</span>
+            <span>{t('footer.available247')}</span>
           </div>
           <div className="flex items-center justify-center space-x-2">
             <CreditCard className="h-4 w-4 text-blue-400" />
-            <span>Paiement sécurisé</span>
+            <span>{t('footer.securePayment')}</span>
           </div>
         </div>
       </footer>
@@ -259,7 +223,7 @@ function App() {
         <WhatsAppIcon />
         <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-linear">
           <span className="pl-2 pr-1 whitespace-nowrap text-sm font-medium">
-            {t.whatsapp}
+            {t('whatsapp')}
           </span>
         </span>
       </button>

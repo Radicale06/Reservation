@@ -15,6 +15,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { reservationService } from "../services/api";
+import { useTranslation } from "react-i18next";
 
 const ReservationForm = ({
   selectedDate,
@@ -22,6 +23,7 @@ const ReservationForm = ({
   onComplete,
   onCancel,
 }) => {
+  const { t } = useTranslation();
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -39,8 +41,8 @@ const ReservationForm = ({
   const [errors, setErrors] = useState({});
 
   const steps = [
-    { label: "Informations", icon: User },
-    { label: "Paiement", icon: CreditCard },
+    { label: t('form.personalInfo'), icon: User },
+    { label: t('payment.title'), icon: CreditCard },
   ];
 
   const paymentMethods = [
@@ -62,18 +64,17 @@ const ReservationForm = ({
     const newErrors = {};
 
     if (step === 0) {
-      if (!formData.firstName.trim()) newErrors.firstName = "Prénom requis";
-      if (!formData.lastName.trim()) newErrors.lastName = "Nom requis";
+      if (!formData.firstName.trim()) newErrors.firstName = t('form.firstNameRequired');
+      if (!formData.lastName.trim()) newErrors.lastName = t('form.lastNameRequired');
       if (!formData.email.trim()) {
-        newErrors.email = "Email requis";
+        newErrors.email = t('form.emailRequired');
       } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-        newErrors.email = "Format d'email invalide";
+        newErrors.email = t('form.invalidEmail');
       }
       if (!formData.phoneNumber.trim()) {
-        newErrors.phoneNumber = "Numéro de téléphone requis";
+        newErrors.phoneNumber = t('form.phoneRequired');
       } else if (!/^[0-9]{8,}$/.test(formData.phoneNumber.replace(/\s/g, ""))) {
-        newErrors.phoneNumber =
-          "Numéro de téléphone invalide (8 chiffres minimum)";
+        newErrors.phoneNumber = t('form.invalidPhone');
       }
     }
 
@@ -115,7 +116,7 @@ const ReservationForm = ({
         // Handle different API response formats
         const reservation = response.reservation || response.data || response;
         setReservationId(reservation.id || reservation._id);
-        setSuccessMessage("Réservation créée avec succès!");
+        setSuccessMessage(t('form.reservationCreated'));
         setActiveStep(1);
       } catch (error) {
         console.error("Error creating reservation:", error);
@@ -123,7 +124,7 @@ const ReservationForm = ({
           error.response?.data?.message ||
           error.response?.data?.error ||
           error.message ||
-          "Erreur lors de la création de la réservation";
+          t('form.reservationError');
         setError(errorMessage);
       } finally {
         setLoading(false);
@@ -135,7 +136,7 @@ const ReservationForm = ({
 
   const handlePayment = async () => {
     if (!reservationId) {
-      setError("ID de réservation manquant");
+      setError(t('payment.missingReservationId'));
       return;
     }
 
@@ -174,13 +175,13 @@ const ReservationForm = ({
         window.location.href = paymentUrl;
       } else if (paymentResponse.success === true) {
         // Payment was processed immediately (test mode or cash payment)
-        setSuccessMessage("Paiement effectué avec succès!");
+        setSuccessMessage(t('payment.paymentSuccess'));
         setTimeout(() => {
           onComplete();
         }, 1500);
       } else {
         throw new Error(
-          paymentResponse.error || "Erreur lors de l'initialisation du paiement"
+          paymentResponse.error || t('payment.paymentInitError')
         );
       }
     } catch (error) {
@@ -189,7 +190,7 @@ const ReservationForm = ({
         error.response?.data?.message ||
         error.response?.data?.error ||
         error.message ||
-        "Erreur lors du traitement du paiement";
+        t('payment.paymentError');
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -216,7 +217,7 @@ const ReservationForm = ({
           <ArrowLeft className="h-5 w-5 text-gray-600" />
         </button>
         <h1 className="text-xl font-bold text-gray-900">
-          Nouvelle Réservation
+          {t('form.newReservation')}
         </h1>
       </div>
 
@@ -268,12 +269,12 @@ const ReservationForm = ({
           <div className="mb-6 p-4 gradient-blue-light rounded-xl border border-blue-200">
             <div className="flex items-center space-x-2 mb-3">
               <Calendar className="h-5 w-5 text-blue-600" />
-              <h3 className="font-semibold text-gray-900">Votre réservation</h3>
+              <h3 className="font-semibold text-gray-900">{t('form.yourReservation')}</h3>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-white p-2 rounded-lg text-center">
-                <div className="text-xs text-gray-500 mb-1">Date</div>
+                <div className="text-xs text-gray-500 mb-1">{t('form.date')}</div>
                 <div className="font-bold text-sm">
                   {new Date(selectedDate).toLocaleDateString("fr-FR", {
                     day: "numeric",
@@ -284,19 +285,19 @@ const ReservationForm = ({
               </div>
 
               <div className="bg-white p-2 rounded-lg text-center">
-                <div className="text-xs text-gray-500 mb-1">Horaire</div>
+                <div className="text-xs text-gray-500 mb-1">{t('form.time')}</div>
                 <div className="font-bold text-sm">
                   {selectedTime} - {getEndTime(selectedTime)}
                 </div>
               </div>
 
               <div className="bg-white p-2 rounded-lg text-center">
-                <div className="text-xs text-gray-500 mb-1">Durée</div>
-                <div className="font-bold text-sm">90 min</div>
+                <div className="text-xs text-gray-500 mb-1">{t('form.duration')}</div>
+                <div className="font-bold text-sm">90 {t('calendar.minutes')}</div>
               </div>
 
               <div className="bg-white p-2 rounded-lg text-center">
-                <div className="text-xs text-gray-500 mb-1">Prix</div>
+                <div className="text-xs text-gray-500 mb-1">{t('form.price')}</div>
                 <div className="font-bold text-sm text-green-600">60 DT</div>
               </div>
             </div>
@@ -322,7 +323,7 @@ const ReservationForm = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Prénom *
+                      {t('form.firstName')} *
                     </label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -337,7 +338,7 @@ const ReservationForm = ({
                             ? "border-red-300 bg-red-50"
                             : "border-gray-300"
                         }`}
-                        placeholder="Votre prénom"
+                        placeholder={t('form.firstNamePlaceholder')}
                       />
                     </div>
                     {errors.firstName && (
@@ -349,7 +350,7 @@ const ReservationForm = ({
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nom *
+                      {t('form.lastName')} *
                     </label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -364,7 +365,7 @@ const ReservationForm = ({
                             ? "border-red-300 bg-red-50"
                             : "border-gray-300"
                         }`}
-                        placeholder="Votre nom"
+                        placeholder={t('form.lastNamePlaceholder')}
                       />
                     </div>
                     {errors.lastName && (
@@ -377,7 +378,7 @@ const ReservationForm = ({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email *
+                    {t('form.email')} *
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -392,7 +393,7 @@ const ReservationForm = ({
                           ? "border-red-300 bg-red-50"
                           : "border-gray-300"
                       }`}
-                      placeholder="votre@email.com"
+                      placeholder={t('form.emailPlaceholder')}
                     />
                   </div>
                   {errors.email && (
@@ -402,7 +403,7 @@ const ReservationForm = ({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Téléphone *
+                    {t('form.phone')} *
                   </label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -417,7 +418,7 @@ const ReservationForm = ({
                           ? "border-red-300 bg-red-50"
                           : "border-gray-300"
                       }`}
-                      placeholder="12 345 678"
+                      placeholder={t('form.phonePlaceholder')}
                     />
                   </div>
                   {errors.phoneNumber && (
@@ -433,14 +434,14 @@ const ReservationForm = ({
               <div className="space-y-6">
                 <div className="text-center p-6 gradient-green rounded-xl">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Total à payer
+                    {t('payment.total')}
                   </h3>
                   <div className="text-4xl font-bold text-green-600">60 DT</div>
                 </div>
 
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    Méthode de paiement
+                    {t('payment.paymentMethod')}
                   </h3>
                   <div className="grid grid-cols-2 gap-3">
                     {paymentMethods.map((method) => {
@@ -472,7 +473,7 @@ const ReservationForm = ({
                 <div className="p-4 bg-green-50 border border-green-200 rounded-xl flex items-center space-x-2">
                   <Shield className="h-5 w-5 text-green-600" />
                   <span className="text-green-700 text-sm font-medium">
-                    Paiement 100% sécurisé avec chiffrement SSL
+                    {t('payment.securePayment')}
                   </span>
                 </div>
               </div>
@@ -487,7 +488,7 @@ const ReservationForm = ({
               className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 disabled:opacity-50 transition-colors flex items-center justify-center space-x-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span>{activeStep === 0 ? "Annuler" : "Retour"}</span>
+              <span>{activeStep === 0 ? t('form.cancel') : t('form.back')}</span>
             </button>
 
             <button
@@ -505,11 +506,11 @@ const ReservationForm = ({
               <span>
                 {loading
                   ? activeStep === 0
-                    ? "Création..."
-                    : "Paiement..."
+                    ? t('form.creating')
+                    : t('payment.processing')
                   : activeStep === 0
-                  ? "Continuer"
-                  : "Payer 60 DT"}
+                  ? t('form.continue')
+                  : t('payment.pay')}
               </span>
             </button>
           </div>
