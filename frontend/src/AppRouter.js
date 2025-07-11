@@ -38,7 +38,6 @@ const AppRouter = () => {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="reservations" element={<Reservations />} />
           <Route path="courts" element={<Courts />} />
-          <Route path="statistics" element={<Dashboard />} />
           <Route path="settings" element={<Settings />} />
         </Route>
         

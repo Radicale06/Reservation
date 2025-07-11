@@ -65,7 +65,7 @@ let ReservationsService = class ReservationsService {
         const queryBuilder = this.reservationsRepository
             .createQueryBuilder('reservation')
             .where('reservation.Date = :date', { date: reservationDate })
-            .andWhere('reservation.Status IN (:...statuses)', { statuses: [1, 2, 4] })
+            .andWhere('reservation.Status IN (:...statuses)', { statuses: [1, 2] })
             .andWhere('(reservation.StartTime < :newEndTime AND reservation.EndTime > :newStartTime)', { newStartTime, newEndTime });
         if (courtId) {
             queryBuilder.andWhere('reservation.CourtId = :courtId', { courtId });
@@ -74,28 +74,42 @@ let ReservationsService = class ReservationsService {
         return overlappingReservations.length === 0;
     }
     async checkSpecificCourtAvailability(checkAvailabilityDto) {
-        const { date, time, courtId } = checkAvailabilityDto;
-        if (!courtId) {
+        try {
+            const { date, time, courtId } = checkAvailabilityDto;
+            if (!courtId) {
+                console.log('No courtId provided for availability check');
+                return false;
+            }
+            const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/;
+            if (!timeRegex.test(time)) {
+                console.error('Invalid time format in checkSpecificCourtAvailability:', time);
+                return false;
+            }
+            const reservationDate = new Date(date);
+            const newStartTime = time;
+            const newEndTime = this.calculateEndTime(time);
+            const court = await this.courtService.findOne(courtId);
+            if (!court) {
+                console.log(`Court ${courtId} not found`);
+                return false;
+            }
+            if (!court.IsActive) {
+                console.log(`Court ${courtId} is not active`);
+                return false;
+            }
+            const overlappingReservations = await this.reservationsRepository
+                .createQueryBuilder('reservation')
+                .where('reservation.Date = :date', { date: reservationDate })
+                .andWhere('reservation.CourtId = :courtId', { courtId })
+                .andWhere('reservation.Status IN (:...statuses)', { statuses: [1, 2] })
+                .andWhere('(reservation.StartTime < :newEndTime AND reservation.EndTime > :newStartTime)', { newStartTime, newEndTime })
+                .getMany();
+            return overlappingReservations.length === 0;
+        }
+        catch (error) {
+            console.error('Error checking court availability:', error);
             return false;
         }
-        const reservationDate = new Date(date);
-        const newStartTime = time;
-        const newEndTime = this.calculateEndTime(time);
-        const court = await this.courtService.findOne(courtId);
-        if (!court) {
-            return false;
-        }
-        if (!court.IsActive) {
-            return false;
-        }
-        const overlappingReservations = await this.reservationsRepository
-            .createQueryBuilder('reservation')
-            .where('reservation.Date = :date', { date: reservationDate })
-            .andWhere('reservation.CourtId = :courtId', { courtId })
-            .andWhere('reservation.Status IN (:...statuses)', { statuses: [1, 2, 4] })
-            .andWhere('(reservation.StartTime < :newEndTime AND reservation.EndTime > :newStartTime)', { newStartTime, newEndTime })
-            .getMany();
-        return overlappingReservations.length === 0;
     }
     async getAvailableSlots(date, courtId) {
         const reservationDate = new Date(date);
@@ -152,7 +166,7 @@ let ReservationsService = class ReservationsService {
         if (!reservation) {
             throw new common_1.BadRequestException('Reservation not found');
         }
-        reservation.Status = 4;
+        reservation.Status = 2;
         reservation.IsPaid = true;
         return this.reservationsRepository.save(reservation);
     }
@@ -163,7 +177,17 @@ let ReservationsService = class ReservationsService {
         if (!reservation) {
             throw new common_1.BadRequestException('Reservation not found');
         }
-        reservation.Status = 3;
+        await this.reservationsRepository.remove(reservation);
+    }
+    async togglePaymentStatus(reservationId) {
+        const reservation = await this.reservationsRepository.findOne({
+            where: { Id: reservationId }
+        });
+        if (!reservation) {
+            throw new common_1.BadRequestException('Reservation not found');
+        }
+        reservation.Status = reservation.Status === 1 ? 2 : 1;
+        reservation.IsPaid = reservation.Status === 2;
         return this.reservationsRepository.save(reservation);
     }
     async findById(id) {
@@ -177,11 +201,21 @@ let ReservationsService = class ReservationsService {
         return reservation;
     }
     calculateEndTime(startTime) {
-        const [hours, minutes] = startTime.split(':').map(Number);
-        const totalMinutes = hours * 60 + minutes + 90;
-        const endHours = Math.floor(totalMinutes / 60);
-        const endMinutes = totalMinutes % 60;
-        return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+        try {
+            const [hours, minutes] = startTime.split(':').map(Number);
+            if (isNaN(hours) || isNaN(minutes)) {
+                console.error('Invalid time components in calculateEndTime:', startTime);
+                throw new Error(`Invalid time format: ${startTime}`);
+            }
+            const totalMinutes = hours * 60 + minutes + 90;
+            const endHours = Math.floor(totalMinutes / 60);
+            const endMinutes = totalMinutes % 60;
+            return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+        }
+        catch (error) {
+            console.error('Error calculating end time:', error);
+            throw error;
+        }
     }
     generateTimeSlots() {
         const slots = [];
@@ -232,18 +266,16 @@ let ReservationsService = class ReservationsService {
             relations: ['court']
         });
         const totalReservations = reservations.length;
-        const confirmedReservations = reservations.filter(r => r.Status === 2).length;
-        const paidReservations = reservations.filter(r => r.Status === 4).length;
-        const cancelledReservations = reservations.filter(r => r.Status === 3).length;
+        const paidReservations = reservations.filter(r => r.Status === 2).length;
+        const pendingReservations = reservations.filter(r => r.Status === 1).length;
         const totalRevenue = reservations
-            .filter(r => r.Status === 4)
+            .filter(r => r.Status === 2)
             .reduce((sum, r) => sum + Number(r.Price), 0);
         return {
             date,
             totalReservations,
-            confirmedReservations,
+            pendingReservations,
             paidReservations,
-            cancelledReservations,
             totalRevenue,
             reservations
         };
@@ -254,7 +286,7 @@ let ReservationsService = class ReservationsService {
         const reservations = await this.reservationsRepository.find({
             where: {
                 Date: (0, typeorm_2.Between)(startDate, endDate),
-                Status: 4
+                Status: 2
             }
         });
         const totalRevenue = reservations.reduce((sum, r) => sum + Number(r.Price), 0);
@@ -280,43 +312,74 @@ let ReservationsService = class ReservationsService {
         };
     }
     async getAvailableStadiumTypes(date, time) {
-        const allCourts = await this.courtService.findActive();
-        const indoorCourts = allCourts.filter(court => {
-            const stadiumType = court.StadiumType || court.Type || 'outdoor';
-            return stadiumType.toLowerCase().includes('indoor') || stadiumType.toLowerCase().includes('int');
-        });
-        const outdoorCourts = allCourts.filter(court => {
-            const stadiumType = court.StadiumType || court.Type || 'outdoor';
-            return stadiumType.toLowerCase().includes('outdoor') ||
-                stadiumType.toLowerCase().includes('ext') ||
-                (!stadiumType.toLowerCase().includes('indoor') && !stadiumType.toLowerCase().includes('int'));
-        });
-        const checkTypeAvailability = async (courts) => {
-            const availableCourts = [];
-            for (const court of courts) {
-                const isAvailable = await this.checkSpecificCourtAvailability({
-                    date,
-                    time,
-                    courtId: court.Id
-                });
-                if (isAvailable) {
-                    availableCourts.push(court);
-                }
+        try {
+            console.log('Checking stadium availability for:', { date, time });
+            if (!date || !time) {
+                console.error('Missing date or time');
+                throw new common_1.BadRequestException('Date and time are required');
             }
-            return {
-                available: availableCourts.length > 0,
-                courts: courts.length,
-                availableCourts
+            const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/;
+            if (!timeRegex.test(time)) {
+                console.error('Invalid time format:', time);
+                throw new common_1.BadRequestException(`Invalid time format: ${time}. Expected HH:MM`);
+            }
+            const dateObj = new Date(date);
+            if (isNaN(dateObj.getTime())) {
+                console.error('Invalid date format:', date);
+                throw new common_1.BadRequestException(`Invalid date format: ${date}`);
+            }
+            const allCourts = await this.courtService.findActive();
+            console.log('All courts found:', allCourts.length, allCourts.map(c => ({ id: c.Id, name: c.Name, stadiumType: c.StadiumType })));
+            const indoorCourts = allCourts.filter(court => {
+                const stadiumType = court.StadiumType || court.Type || 'outdoor';
+                return stadiumType.toLowerCase().includes('indoor') || stadiumType.toLowerCase().includes('int');
+            });
+            const outdoorCourts = allCourts.filter(court => {
+                const stadiumType = court.StadiumType || court.Type || 'outdoor';
+                return stadiumType.toLowerCase().includes('outdoor') ||
+                    stadiumType.toLowerCase().includes('ext') ||
+                    (!stadiumType.toLowerCase().includes('indoor') && !stadiumType.toLowerCase().includes('int'));
+            });
+            console.log('Indoor courts:', indoorCourts.length, indoorCourts.map(c => c.Name));
+            console.log('Outdoor courts:', outdoorCourts.length, outdoorCourts.map(c => c.Name));
+            const checkTypeAvailability = async (courts) => {
+                const availableCourts = [];
+                for (const court of courts) {
+                    const isAvailable = await this.checkSpecificCourtAvailability({
+                        date,
+                        time,
+                        courtId: court.Id
+                    });
+                    if (isAvailable) {
+                        availableCourts.push(court);
+                    }
+                }
+                return {
+                    available: availableCourts.length > 0,
+                    courts: availableCourts.length,
+                    availableCourts
+                };
             };
-        };
-        const [indoorAvailability, outdoorAvailability] = await Promise.all([
-            checkTypeAvailability(indoorCourts),
-            checkTypeAvailability(outdoorCourts)
-        ]);
-        return {
-            indoor: indoorAvailability,
-            outdoor: outdoorAvailability
-        };
+            const [indoorAvailability, outdoorAvailability] = await Promise.all([
+                checkTypeAvailability(indoorCourts),
+                checkTypeAvailability(outdoorCourts)
+            ]);
+            console.log('Final availability:', {
+                indoor: { total: indoorCourts.length, available: indoorAvailability.courts },
+                outdoor: { total: outdoorCourts.length, available: outdoorAvailability.courts }
+            });
+            return {
+                indoor: indoorAvailability,
+                outdoor: outdoorAvailability
+            };
+        }
+        catch (error) {
+            console.error('Error in getAvailableStadiumTypes:', error);
+            if (error instanceof common_1.BadRequestException) {
+                throw error;
+            }
+            throw new common_1.BadRequestException('Failed to check stadium availability. Please try again.');
+        }
     }
     async getCourtAssignments(date, time) {
         const reservationDate = new Date(date);

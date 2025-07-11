@@ -22,6 +22,10 @@ INSERT INTO `Account` (`Username`, `Password`, `FullName`, `Email`, `IsActive`, 
 VALUES ('admin', '$2b$10$rQZ5nqZ5nqZ5nqZ5nqZ5nO5nqZ5nqZ5nqZ5nqZ5nqZ5nqZ5nqZ5nq', 'Administrator', 'admin@example.com', 1, NOW())
 ON DUPLICATE KEY UPDATE `Username` = VALUES(`Username`);
 
+-- Grant permissions for WSL connections
+GRANT ALL PRIVILEGES ON reservation_db.* TO 'reservation_user'@'%';
+FLUSH PRIVILEGES;
+
 -- Insert sample reservations (optional - remove if you don't want sample data)
 INSERT INTO `Reservation` (`PlayerFullName`, `PlayerPhone`, `PlayerEmail`, `NumberOfPlayers`, `StadiumType`, `CourtId`, `StartTime`, `EndTime`, `Date`, `Price`, `Status`, `IsPaid`, `CreatedAt`, `CreatedBy`)
 VALUES 

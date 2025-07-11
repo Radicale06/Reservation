@@ -17,28 +17,45 @@ export class CourtService {
   }
 
   async findActive() {
-    const courts = await this.courtRepository.find({
-      where: { IsActive: true },
-      order: { Name: 'ASC' },
-    });
-    
-    // Normalize legacy courts without StadiumType
-    return courts.map(court => {
-      if (!court.StadiumType) {
-        // Infer from Type field or default to outdoor
-        if (court.Type && court.Type.toLowerCase().includes('indoor')) {
-          court.StadiumType = 'indoor';
-        } else {
-          court.StadiumType = 'outdoor';
+    try {
+      const courts = await this.courtRepository.find({
+        where: { IsActive: true },
+        order: { Name: 'ASC' },
+      });
+      
+      console.log(`Found ${courts.length} active courts`);
+      
+      // Normalize legacy courts without StadiumType
+      const normalizedCourts = courts.map(court => {
+        if (!court.StadiumType) {
+          // Infer from Type field or default to outdoor
+          if (court.Type && court.Type.toLowerCase().includes('indoor')) {
+            court.StadiumType = 'indoor';
+            console.log(`Court ${court.Name} (ID: ${court.Id}): Inferred StadiumType as 'indoor' from Type field`);
+          } else {
+            court.StadiumType = 'outdoor';
+            console.log(`Court ${court.Name} (ID: ${court.Id}): Defaulted StadiumType to 'outdoor'`);
+          }
         }
-      }
+        
+        if (!court.SportType) {
+          court.SportType = 'padel';
+          console.log(`Court ${court.Name} (ID: ${court.Id}): Defaulted SportType to 'padel'`);
+        }
+        
+        return court;
+      });
       
-      if (!court.SportType) {
-        court.SportType = 'padel';
-      }
+      console.log('Active courts by stadium type:', {
+        indoor: normalizedCourts.filter(c => c.StadiumType === 'indoor').length,
+        outdoor: normalizedCourts.filter(c => c.StadiumType === 'outdoor').length
+      });
       
-      return court;
-    });
+      return normalizedCourts;
+    } catch (error) {
+      console.error('Error fetching active courts:', error);
+      throw error;
+    }
   }
 
   async findOne(id: number) {

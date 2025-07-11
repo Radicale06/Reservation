@@ -23,7 +23,18 @@ let CourtController = class CourtController {
         this.courtService = courtService;
     }
     async findAll() {
-        return this.courtService.findAll();
+        try {
+            const courts = await this.courtService.findAll();
+            console.log('Court controller - Total courts:', courts.length);
+            return courts;
+        }
+        catch (error) {
+            console.error('Error fetching courts:', error);
+            throw error;
+        }
+    }
+    test() {
+        return { message: 'Courts endpoint working', timestamp: new Date().toISOString() };
     }
     async findActive() {
         return this.courtService.findActive();
@@ -54,6 +65,92 @@ let CourtController = class CourtController {
             }))
         };
     }
+    async debugActive() {
+        const courts = await this.courtService.findActive();
+        const indoor = courts.filter(c => c.StadiumType === 'indoor');
+        const outdoor = courts.filter(c => c.StadiumType === 'outdoor');
+        return {
+            totalActive: courts.length,
+            byType: {
+                indoor: {
+                    count: indoor.length,
+                    courts: indoor.map(c => ({ id: c.Id, name: c.Name }))
+                },
+                outdoor: {
+                    count: outdoor.length,
+                    courts: outdoor.map(c => ({ id: c.Id, name: c.Name }))
+                }
+            },
+            allCourts: courts.map(court => ({
+                id: court.Id,
+                name: court.Name,
+                stadiumType: court.StadiumType,
+                sportType: court.SportType,
+                isActive: court.IsActive
+            }))
+        };
+    }
+    async seedCourts() {
+        const existingCourts = await this.courtService.findAll();
+        if (existingCourts.length === 0) {
+            const sampleCourts = [
+                {
+                    Name: 'Terrain Padel Extérieur 1',
+                    Description: 'Terrain de padel extérieur principal',
+                    Type: 'Court',
+                    StadiumType: 'outdoor',
+                    SportType: 'padel',
+                    IsActive: true
+                },
+                {
+                    Name: 'Terrain Padel Extérieur 2',
+                    Description: 'Terrain de padel extérieur secondaire',
+                    Type: 'Court',
+                    StadiumType: 'outdoor',
+                    SportType: 'padel',
+                    IsActive: true
+                },
+                {
+                    Name: 'Terrain Padel Intérieur 1',
+                    Description: 'Terrain de padel intérieur climatisé',
+                    Type: 'Court',
+                    StadiumType: 'indoor',
+                    SportType: 'padel',
+                    IsActive: true
+                }
+            ];
+            const createdCourts = [];
+            for (const courtData of sampleCourts) {
+                const court = await this.courtService.create(courtData);
+                createdCourts.push(court);
+            }
+            return {
+                message: 'Sample courts created successfully',
+                courts: createdCourts
+            };
+        }
+        else {
+            return {
+                message: 'Courts already exist',
+                count: existingCourts.length
+            };
+        }
+    }
+    async activateAllCourts() {
+        const allCourts = await this.courtService.findAll();
+        const updatedCourts = [];
+        for (const court of allCourts) {
+            if (!court.IsActive) {
+                const updated = await this.courtService.update(court.Id, { IsActive: true });
+                updatedCourts.push(updated);
+            }
+        }
+        return {
+            message: `Activated ${updatedCourts.length} courts`,
+            activatedCourts: updatedCourts.map(c => ({ id: c.Id, name: c.Name })),
+            totalCourts: allCourts.length
+        };
+    }
 };
 exports.CourtController = CourtController;
 __decorate([
@@ -62,6 +159,12 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], CourtController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('test'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], CourtController.prototype, "test", null);
 __decorate([
     (0, common_1.Get)('active'),
     __metadata("design:type", Function),
@@ -103,6 +206,24 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], CourtController.prototype, "debug", null);
+__decorate([
+    (0, common_1.Get)('debug/active'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], CourtController.prototype, "debugActive", null);
+__decorate([
+    (0, common_1.Post)('seed'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], CourtController.prototype, "seedCourts", null);
+__decorate([
+    (0, common_1.Post)('activate-all'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], CourtController.prototype, "activateAllCourts", null);
 exports.CourtController = CourtController = __decorate([
     (0, common_1.Controller)('courts'),
     __metadata("design:paramtypes", [court_service_1.CourtService])

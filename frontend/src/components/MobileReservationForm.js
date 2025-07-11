@@ -62,6 +62,7 @@ const MobileReservationForm = ({
   const checkStadiumAvailability = async () => {
     setCheckingStadiums(true);
     try {
+      console.log('Checking availability for:', { selectedDate, selectedTime });
       const response = await reservationService.checkStadiumAvailability(selectedDate, selectedTime);
       
       // Ensure response has correct structure
@@ -78,12 +79,12 @@ const MobileReservationForm = ({
         }
       };
       
-      // If no courts are found, default to making both available
+      console.log('Stadium availability response:', safeResponse);
+      
+      // If no courts are found, show warning but don't assume availability
       if (safeResponse.indoor.courts === 0 && safeResponse.outdoor.courts === 0) {
-        safeResponse.indoor.available = true;
-        safeResponse.outdoor.available = true;
-        safeResponse.indoor.courts = 3; // Default assumption
-        safeResponse.outdoor.courts = 3; // Default assumption
+        console.warn('No courts found - this may indicate a database issue');
+        // Don't automatically set availability - let user see the actual situation
       }
       
       setStadiumAvailability(safeResponse);
@@ -100,8 +101,8 @@ const MobileReservationForm = ({
       console.error('Error checking stadium availability:', error);
       // Set default availability if API fails - assume courts are available
       setStadiumAvailability({
-        indoor: { available: true, courts: 3, availableCourts: [] },
-        outdoor: { available: true, courts: 3, availableCourts: [] }
+        indoor: { available: true, courts: 1, availableCourts: [] },
+        outdoor: { available: true, courts: 2, availableCourts: [] }
       });
     } finally {
       setCheckingStadiums(false);
@@ -584,7 +585,7 @@ const MobileReservationForm = ({
                       <span className="font-medium">Intérieur</span>
                       <span className="text-xs opacity-75">
                         {stadiumAvailability.indoor.available
-                          ? `${stadiumAvailability.indoor.availableCourts?.length || 0} disponible(s)`
+                          ? `${stadiumAvailability.indoor.courts || 0} disponible(s)`
                           : "Complet"}
                       </span>
                     </button>
@@ -614,7 +615,7 @@ const MobileReservationForm = ({
                       <span className="font-medium">Extérieur</span>
                       <span className="text-xs opacity-75">
                         {stadiumAvailability.outdoor.available
-                          ? `${stadiumAvailability.outdoor.availableCourts?.length || 0} disponible(s)`
+                          ? `${stadiumAvailability.outdoor.courts || 0} disponible(s)`
                           : "Complet"}
                       </span>
                     </button>
@@ -671,125 +672,7 @@ const MobileReservationForm = ({
                 </div>
               </div>
 
-              {/* Card Details Form */}
-              {formData.paymentMethod === "card" && (
-                <div className="space-y-4 animate-fadeIn">
-                  <h4 className="font-semibold text-gray-900">
-                    Informations de la carte
-                  </h4>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Numéro de carte *
-                    </label>
-                    <div className="relative">
-                      <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                      <input
-                        type="text"
-                        value={formData.cardNumber}
-                        onChange={(e) =>
-                          handleInputChange("cardNumber", e.target.value)
-                        }
-                        className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                          errors.cardNumber
-                            ? "border-red-300 bg-red-50"
-                            : "border-gray-300"
-                        }`}
-                        placeholder="1234 5678 9012 3456"
-                      />
-                    </div>
-                    {errors.cardNumber && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {errors.cardNumber}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nom du titulaire *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.cardHolder}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "cardHolder",
-                          e.target.value.toUpperCase()
-                        )
-                      }
-                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                        errors.cardHolder
-                          ? "border-red-300 bg-red-50"
-                          : "border-gray-300"
-                      }`}
-                      placeholder="JEAN DUPONT"
-                    />
-                    {errors.cardHolder && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {errors.cardHolder}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Date d'expiration *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.expiryDate}
-                        onChange={(e) =>
-                          handleInputChange("expiryDate", e.target.value)
-                        }
-                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                          errors.expiryDate
-                            ? "border-red-300 bg-red-50"
-                            : "border-gray-300"
-                        }`}
-                        placeholder="MM/YY"
-                      />
-                      {errors.expiryDate && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {errors.expiryDate}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        CVV *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.cvv}
-                        onChange={(e) =>
-                          handleInputChange("cvv", e.target.value)
-                        }
-                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                          errors.cvv
-                            ? "border-red-300 bg-red-50"
-                            : "border-gray-300"
-                        }`}
-                        placeholder="123"
-                      />
-                      {errors.cvv && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {errors.cvv}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-green-50 border border-green-200 rounded-xl flex items-center space-x-2">
-                    <Shield className="h-5 w-5 text-green-600" />
-                    <span className="text-green-700 text-sm font-medium">
-                      Paiement 100% sécurisé
-                    </span>
-                  </div>
-                </div>
-              )}
+       
 
               {/* Cash Payment Info */}
               {formData.paymentMethod === "cash" && (

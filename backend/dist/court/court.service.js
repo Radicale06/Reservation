@@ -28,24 +28,39 @@ let CourtService = class CourtService {
         });
     }
     async findActive() {
-        const courts = await this.courtRepository.find({
-            where: { IsActive: true },
-            order: { Name: 'ASC' },
-        });
-        return courts.map(court => {
-            if (!court.StadiumType) {
-                if (court.Type && court.Type.toLowerCase().includes('indoor')) {
-                    court.StadiumType = 'indoor';
+        try {
+            const courts = await this.courtRepository.find({
+                where: { IsActive: true },
+                order: { Name: 'ASC' },
+            });
+            console.log(`Found ${courts.length} active courts`);
+            const normalizedCourts = courts.map(court => {
+                if (!court.StadiumType) {
+                    if (court.Type && court.Type.toLowerCase().includes('indoor')) {
+                        court.StadiumType = 'indoor';
+                        console.log(`Court ${court.Name} (ID: ${court.Id}): Inferred StadiumType as 'indoor' from Type field`);
+                    }
+                    else {
+                        court.StadiumType = 'outdoor';
+                        console.log(`Court ${court.Name} (ID: ${court.Id}): Defaulted StadiumType to 'outdoor'`);
+                    }
                 }
-                else {
-                    court.StadiumType = 'outdoor';
+                if (!court.SportType) {
+                    court.SportType = 'padel';
+                    console.log(`Court ${court.Name} (ID: ${court.Id}): Defaulted SportType to 'padel'`);
                 }
-            }
-            if (!court.SportType) {
-                court.SportType = 'padel';
-            }
-            return court;
-        });
+                return court;
+            });
+            console.log('Active courts by stadium type:', {
+                indoor: normalizedCourts.filter(c => c.StadiumType === 'indoor').length,
+                outdoor: normalizedCourts.filter(c => c.StadiumType === 'outdoor').length
+            });
+            return normalizedCourts;
+        }
+        catch (error) {
+            console.error('Error fetching active courts:', error);
+            throw error;
+        }
     }
     async findOne(id) {
         return this.courtRepository.findOne({

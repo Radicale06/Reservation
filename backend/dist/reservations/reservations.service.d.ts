@@ -14,7 +14,8 @@ export declare class ReservationsService {
     findAll(): Promise<Reservation[]>;
     findByDateRange(startDate: Date, endDate: Date): Promise<Reservation[]>;
     confirmPayment(reservationId: number, paymentId: string, gateway?: string): Promise<Reservation>;
-    cancelReservation(reservationId: number): Promise<Reservation>;
+    cancelReservation(reservationId: number): Promise<void>;
+    togglePaymentStatus(reservationId: number): Promise<Reservation>;
     findById(id: number): Promise<Reservation>;
     private calculateEndTime;
     private generateTimeSlots;

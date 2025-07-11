@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import {
   Calendar,
   Clock,
-  DollarSign,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
@@ -256,7 +255,6 @@ const MobileCalendar = ({ onTimeSlotSelect }) => {
                       </div>
                       <div className="text-xs opacity-75 mb-2">90 min</div>
                       <div className="inline-flex items-center space-x-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium group-hover:bg-white group-hover:bg-opacity-20">
-                        <DollarSign className="h-3 w-3" />
                         <span>
                           {typeof slot === "object" && slot.price
                             ? `${slot.price} DT`

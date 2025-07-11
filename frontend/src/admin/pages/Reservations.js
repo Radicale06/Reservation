@@ -7,7 +7,6 @@ import {
   Users, 
   MapPin,
   Phone,
-  DollarSign,
   CheckCircle,
   XCircle,
   Eye,
@@ -212,10 +211,6 @@ const Reservations = () => {
               <Plus size={16} />
               Nouvelle réservation
             </button>
-            <button className="btn btn-secondary">
-              <Download size={16} />
-              Exporter
-            </button>
           </div>
         </div>
       </div>
@@ -290,7 +285,6 @@ const Reservations = () => {
                     </td>
                     <td>
                       <div className="price-info">
-                        <DollarSign size={14} />
                         {formatCurrency(reservation.Price)}
                       </div>
                     </td>

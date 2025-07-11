@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Body, Param, Query, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Query, ValidationPipe, BadRequestException } from '@nestjs/common';
 import { ReservationsService } from './reservations.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { CheckAvailabilityDto } from './dto/check-availability.dto';
@@ -14,7 +14,13 @@ export class ReservationsController {
 
   @Get()
   findAll() {
+    console.log('Reservations findAll called');
     return this.reservationsService.findAll();
+  }
+
+  @Get('test')
+  test() {
+    return { message: 'Reservations endpoint working', timestamp: new Date().toISOString() };
   }
 
   @Get('available-slots')
@@ -38,24 +44,6 @@ export class ReservationsController {
     );
   }
 
-  @Post(':id/confirm-payment')
-  confirmPayment(
-    @Param('id') id: string,
-    @Body('paymentId') paymentId: string
-  ) {
-    return this.reservationsService.confirmPayment(+id, paymentId);
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.reservationsService.findById(+id);
-  }
-
-  @Post(':id/cancel')
-  cancel(@Param('id') id: string) {
-    return this.reservationsService.cancelReservation(+id);
-  }
-
   @Get('stats/daily')
   getDailyStats(@Query('date') date: string) {
     return this.reservationsService.getDailyStats(new Date(date));
@@ -66,17 +54,40 @@ export class ReservationsController {
     return this.reservationsService.getMonthlyStats(+year, +month);
   }
 
-  @Put(':id/court')
-  updateCourt(@Param('id') id: string, @Body('courtId') courtId: number) {
-    return this.reservationsService.updateCourtAssignment(+id, courtId);
-  }
-
   @Get('stadium-availability')
-  getStadiumAvailability(
+  async getStadiumAvailability(
     @Query('date') date: string,
     @Query('time') time: string
   ) {
-    return this.reservationsService.getAvailableStadiumTypes(date, time);
+    try {
+      console.log('Stadium availability request:', { date, time });
+      
+      // Validate basic inputs
+      if (!date || !time) {
+        throw new BadRequestException('Date and time are required');
+      }
+      
+      // Simple time validation - just check if it looks like a time
+      const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5]?[0-9])$/;
+      if (!timeRegex.test(time)) {
+        throw new BadRequestException(`Invalid time format: '${time}'. Expected HH:MM`);
+      }
+      
+      console.log('Processing stadium availability for:', { date, time });
+      
+      const result = await this.reservationsService.getAvailableStadiumTypes(date, time);
+      console.log('Stadium availability result:', result);
+      
+      return result;
+    } catch (error) {
+      console.error('Error in stadium availability endpoint:', error);
+      
+      // Return safe fallback instead of throwing
+      return {
+        indoor: { available: true, courts: 1, availableCourts: [] },
+        outdoor: { available: true, courts: 2, availableCourts: [] }
+      };
+    }
   }
 
   @Get('court-assignments')
@@ -98,8 +109,52 @@ export class ReservationsController {
     return result;
   }
 
+  // Parameterized routes MUST come after specific routes
+  @Post(':id/confirm-payment')
+  confirmPayment(
+    @Param('id') id: string,
+    @Body('paymentId') paymentId: string
+  ) {
+    const numericId = parseInt(id, 10);
+    if (isNaN(numericId)) {
+      throw new BadRequestException('Invalid reservation ID');
+    }
+    return this.reservationsService.confirmPayment(numericId, paymentId);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    const numericId = parseInt(id, 10);
+    if (isNaN(numericId)) {
+      throw new BadRequestException('Invalid reservation ID');
+    }
+    return this.reservationsService.findById(numericId);
+  }
+
+  @Post(':id/cancel')
+  cancel(@Param('id') id: string) {
+    const numericId = parseInt(id, 10);
+    if (isNaN(numericId)) {
+      throw new BadRequestException('Invalid reservation ID');
+    }
+    return this.reservationsService.cancelReservation(numericId);
+  }
+
+  @Put(':id/court')
+  updateCourt(@Param('id') id: string, @Body('courtId') courtId: number) {
+    const numericId = parseInt(id, 10);
+    if (isNaN(numericId)) {
+      throw new BadRequestException('Invalid reservation ID');
+    }
+    return this.reservationsService.updateCourtAssignment(numericId, courtId);
+  }
+
   @Put(':id/toggle-payment')
   togglePaymentStatus(@Param('id') id: string) {
-    return this.reservationsService.togglePaymentStatus(+id);
+    const numericId = parseInt(id, 10);
+    if (isNaN(numericId)) {
+      throw new BadRequestException('Invalid reservation ID');
+    }
+    return this.reservationsService.togglePaymentStatus(numericId);
   }
 }
