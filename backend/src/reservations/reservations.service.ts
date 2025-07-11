@@ -63,7 +63,10 @@ export class ReservationsService {
 
   async checkAvailability(checkAvailabilityDto: CheckAvailabilityDto): Promise<boolean> {
     const { date, time, courtId } = checkAvailabilityDto;
+    // Handle date comparison properly - database stores dates as DATE type
     const reservationDate = new Date(date);
+    // Set time to midnight to match database DATE format
+    reservationDate.setHours(0, 0, 0, 0);
     
     const newStartTime = time;
     const newEndTime = this.calculateEndTime(time);
@@ -103,7 +106,11 @@ export class ReservationsService {
         return false;
       }
 
+      // Handle date comparison properly - database stores dates as DATE type
       const reservationDate = new Date(date);
+      // Set time to midnight to match database DATE format
+      reservationDate.setHours(0, 0, 0, 0);
+      
       const newStartTime = time;
       const newEndTime = this.calculateEndTime(time);
 
@@ -553,17 +560,22 @@ export class ReservationsService {
       }
     });
     
-    // Mark available courts
-    allCourts.forEach(court => {
-      const isOccupied = overlappingReservations.some(r => r.CourtId === court.Id);
-      if (!isOccupied) {
+    // Mark available courts using the same logic as checkSpecificCourtAvailability
+    for (const court of allCourts) {
+      const isAvailable = await this.checkSpecificCourtAvailability({
+        date,
+        time,
+        courtId: court.Id
+      });
+      
+      if (isAvailable) {
         assignments[court.StadiumType].available.push({
           courtId: court.Id,
           courtName: court.Name,
           sportType: court.SportType
         });
       }
-    });
+    }
     
     return assignments;
   }

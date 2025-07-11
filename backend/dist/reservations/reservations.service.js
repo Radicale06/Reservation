@@ -60,6 +60,7 @@ let ReservationsService = class ReservationsService {
     async checkAvailability(checkAvailabilityDto) {
         const { date, time, courtId } = checkAvailabilityDto;
         const reservationDate = new Date(date);
+        reservationDate.setHours(0, 0, 0, 0);
         const newStartTime = time;
         const newEndTime = this.calculateEndTime(time);
         const queryBuilder = this.reservationsRepository
@@ -86,6 +87,7 @@ let ReservationsService = class ReservationsService {
                 return false;
             }
             const reservationDate = new Date(date);
+            reservationDate.setHours(0, 0, 0, 0);
             const newStartTime = time;
             const newEndTime = this.calculateEndTime(time);
             const court = await this.courtService.findOne(courtId);
@@ -415,16 +417,20 @@ let ReservationsService = class ReservationsService {
                 });
             }
         });
-        allCourts.forEach(court => {
-            const isOccupied = overlappingReservations.some(r => r.CourtId === court.Id);
-            if (!isOccupied) {
+        for (const court of allCourts) {
+            const isAvailable = await this.checkSpecificCourtAvailability({
+                date,
+                time,
+                courtId: court.Id
+            });
+            if (isAvailable) {
                 assignments[court.StadiumType].available.push({
                     courtId: court.Id,
                     courtName: court.Name,
                     sportType: court.SportType
                 });
             }
-        });
+        }
         return assignments;
     }
 };
